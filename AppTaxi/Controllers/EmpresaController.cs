@@ -136,7 +136,7 @@ namespace AppTaxi.Controllers
 
         }
 
-        
+
 
         //------------ Acciones principales ------------
 
@@ -152,8 +152,7 @@ namespace AppTaxi.Controllers
 
             var login = CreateLogin(usuario);
 
-            //Contrasenas(login);
-            // Ejecutar todas las llamadas API en paralelo para reducir el tiempo de espera
+            // Ejecutar las llamadas a la API en paralelo
             var empresasTask = _empresa.Lista(login);
             var vehiculosTask = _vehiculo.Lista(login);
             var conductoresTask = _conductor.Lista(login);
@@ -162,34 +161,41 @@ namespace AppTaxi.Controllers
 
             await Task.WhenAll(empresasTask, vehiculosTask, conductoresTask, propietariosTask, horariosTask);
 
-            var empresasTotales = await empresasTask;
-            var vehiculosTotales = await vehiculosTask;
-            var conductoresTotales = await conductoresTask;
-            var propietariosTotales = await propietariosTask;
-            var horariosTotales = await horariosTask;
+            var empresasTotales = empresasTask.Result;
+            var vehiculosTotales = vehiculosTask.Result;
+            var conductoresTotales = conductoresTask.Result;
+            var propietariosTotales = propietariosTask.Result;
+            var horariosTotales = horariosTask.Result;
 
-            int IdEmpresa = empresasTotales
-                .Where(e => e.IdUsuario == usuario.IdUsuario)
-                .Select(e => e.IdEmpresa)
-                .FirstOrDefault();
+            // Obtener la empresa actual
+            var empresaActual = empresasTotales.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresaActual == null)
+            {
+                ViewBag.Mensaje = "Empresa no encontrada.";
+                return View();
+            }
+            int idEmpresa = empresaActual.IdEmpresa;
 
-            // Convertimos las listas en diccionarios para acceso rápido
+            // Crear diccionarios para búsquedas rápidas
             var vehiculosDict = vehiculosTotales.ToDictionary(v => v.IdVehiculo);
-            var conductoresDict = conductoresTotales.ToDictionary(c => c.IdConductor);
+            // Filtramos conductores de la empresa y con estado activo directamente
+            var conductoresDict = conductoresTotales
+                                  .Where(c => c.IdEmpresa == idEmpresa && c.Estado)
+                                  .ToDictionary(c => c.IdConductor);
             var propietariosDict = propietariosTotales.ToDictionary(p => p.IdPropietario);
 
-            List<DatosEmpresa> DatosIniciales = new List<DatosEmpresa>();
-            int i = 1;
-
-            foreach (var h in horariosTotales)
-            {
-                if (conductoresDict.TryGetValue(h.IdConductor, out var c) && c.IdEmpresa == IdEmpresa && c.Estado)
+            // Construir la lista de datos de forma concisa
+            var datosIniciales = horariosTotales
+                .Where(h => conductoresDict.ContainsKey(h.IdConductor))
+                .Select((h, index) =>
                 {
-                    if (vehiculosDict.TryGetValue(h.IdVehiculo, out var v) && propietariosDict.TryGetValue(v.IdPropietario, out var p))
+                    var c = conductoresDict[h.IdConductor];
+                    if (vehiculosDict.TryGetValue(h.IdVehiculo, out var v) &&
+                        propietariosDict.TryGetValue(v.IdPropietario, out var p))
                     {
-                        DatosIniciales.Add(new DatosEmpresa
+                        return new DatosEmpresa
                         {
-                            IdDato = i++,
+                            IdDato = index + 1,
                             Foto = c.Foto,
                             IdVehiculo = h.IdVehiculo,
                             Placa = v.Placa,
@@ -198,21 +204,21 @@ namespace AppTaxi.Controllers
                             Fecha = h.Fecha,
                             HoraInicio = h.HoraInicio,
                             HoraFin = h.HoraFin
-                        });
+                        };
                     }
-                }
-            }
+                    return null;
+                })
+                .Where(d => d != null)
+                .ToList();
 
+            // Evitar múltiples llamadas a Cupos() almacenando su resultado en una variable
+            int cuposDisponibles = empresaActual.Cupos - await Cupos();
+            ViewBag.Cupos = cuposDisponibles;
             ViewBag.Mensaje = $"Bienvenid@ {usuario.Nombre}";
 
-            List<Empresa> empresas = await _empresa.Lista(login);
-
-            var empresa = empresas.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault();
-            ViewBag.Cupos = empresa.Cupos - await Cupos();
-
-
-            return View(DatosIniciales);
+            return View(datosIniciales);
         }
+
 
 
         // Muestra los detalles de un registro específico (vehículo, conductor, horario, etc.).
@@ -301,40 +307,37 @@ namespace AppTaxi.Controllers
 
             var login = CreateLogin(usuario);
 
-            // Obtiene las empresas y vehículos asociados al usuario.
-            var empresas = await _empresa.Lista(login);
-            var vehiculosTotales = await _vehiculo.Lista(login);
+            // Ejecutar en paralelo la obtención de empresas y vehículos
+            var empresasTask = _empresa.Lista(login);
+            var vehiculosTask = _vehiculo.Lista(login);
+            await Task.WhenAll(empresasTask, vehiculosTask);
 
-            // Filtra los vehículos asociados a la empresa del usuario.
-            var idEmpresa = empresas.FirstOrDefault(item => item.IdUsuario == usuario.IdUsuario)?.IdEmpresa;
-            var vehiculosEmpresa = vehiculosTotales?.Where(v => v.IdEmpresa == idEmpresa && v.Estado).ToList();
+            var empresas = empresasTask.Result;
+            var vehiculosTotales = vehiculosTask.Result;
 
-            if (vehiculosEmpresa.Count() > 0)
+            // Filtrar la empresa actual y los vehículos asociados activos
+            var empresaActual = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresaActual == null)
             {
-
-                int i = 0;
-                while (true)
-                {
-                    vehiculosEmpresa[i].Contador = i + 1;
-                    if (i == vehiculosEmpresa.Count() - 1)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        i++;
-                    }
-                }
+                ViewBag.Mensaje = "Empresa no encontrada.";
+                return View(new List<Vehiculo>());
             }
-            List<Empresa> empresasTot = await _empresa.Lista(login);
+            int idEmpresa = empresaActual.IdEmpresa;
+            var vehiculosEmpresa = vehiculosTotales.Where(v => v.IdEmpresa == idEmpresa && v.Estado).ToList();
 
-            var empresa = empresasTot.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault();
-            ViewBag.Cupos = empresa.Cupos - await Cupos();
+            // Asignar el contador a cada vehículo utilizando un bucle for
+            for (int i = 0; i < vehiculosEmpresa.Count; i++)
+            {
+                vehiculosEmpresa[i].Contador = i + 1;
+            }
+
+            // Se utiliza la empresa obtenida anteriormente para calcular los cupos disponibles
+            ViewBag.Cupos = empresaActual.Cupos - await Cupos();
 
             return View(vehiculosEmpresa);
         }
 
-        // Muestra los detalles de un vehículo específico.
+
         public async Task<IActionResult> Detalle_Vehiculo(int IdVehiculo)
         {
             var usuario = GetUsuarioFromSession();
@@ -346,19 +349,28 @@ namespace AppTaxi.Controllers
 
             var login = CreateLogin(usuario);
 
-            // Obtiene el vehículo y el propietario asociado.
+            // Obtiene el vehículo de forma directa (necesario para obtener el IdPropietario)
             var vehiculo = await _vehiculo.Obtener(IdVehiculo, login);
+            // Obtiene el propietario asociado al vehículo
             var propietario = await _propietario.Obtener(vehiculo.IdPropietario, login);
-
             ViewBag.Propietario = propietario?.Nombre;
-            List<Empresa> empresasTot = await _empresa.Lista(login);
 
-            var empresa = empresasTot.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault();
-            ViewBag.Cupos = empresa.Cupos - await Cupos();
+            // Lanza en paralelo la obtención de la lista de empresas y el cálculo de cupos
+            var empresasTask = _empresa.Lista(login);
+            var cuposTask = Cupos();
+            await Task.WhenAll(empresasTask, cuposTask);
+
+            var empresasTot = empresasTask.Result;
+            var cuposValue = cuposTask.Result;
+
+            var empresa = empresasTot.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            ViewBag.Cupos = empresa.Cupos - cuposValue;
 
             return View(vehiculo);
         }
 
+
+        
         // Muestra el formulario para editar un vehículo.
         public async Task<IActionResult> Editar_Vehiculo(int IdVehiculo)
         {
@@ -370,16 +382,22 @@ namespace AppTaxi.Controllers
             }
 
             var login = CreateLogin(usuario);
-            var vehiculo = await _vehiculo.Obtener(IdVehiculo, login);
-            ModeloVista modelo = new ModeloVista();
-            modelo.Vehiculo = vehiculo;
 
+            // Lanzar en paralelo la obtención del vehículo, la lista de empresas y el cálculo de cupos.
+            var vehiculoTask = _vehiculo.Obtener(IdVehiculo, login);
+            var empresasTask = _empresa.Lista(login);
+            var cuposTask = Cupos();
 
-            List<Empresa> empresasTot = await _empresa.Lista(login);
+            await Task.WhenAll(vehiculoTask, empresasTask, cuposTask);
 
-            var empresa = empresasTot.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault();
-            ViewBag.Cupos = empresa.Cupos - await Cupos();
+            var vehiculo = vehiculoTask.Result;
+            var empresasTot = empresasTask.Result;
+            int cuposValue = cuposTask.Result;
 
+            var empresa = empresasTot.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            ViewBag.Cupos = empresa?.Cupos - cuposValue;
+
+            ModeloVista modelo = new ModeloVista { Vehiculo = vehiculo };
             return View(modelo);
         }
 
@@ -387,24 +405,27 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Guardar_Vehiculo(ModeloVista modelo)
         {
-            
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
                 ViewBag.Mensaje = "Usuario no autenticado.";
                 return RedirectToAction("Login", "Inicio");
             }
-
             var login = CreateLogin(usuario);
 
+            // Obtener empresas y cupos en paralelo.
+            var empresasTask = _empresa.Lista(login);
+            var cuposTask = Cupos();
+            await Task.WhenAll(empresasTask, cuposTask);
 
-            var empresas = await _empresa.Lista(login);
+            var empresas = empresasTask.Result;
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            ViewBag.Cupos = empresa?.Cupos - cuposTask.Result;
 
-            ViewBag.Cupos = empresa.Cupos - await Cupos();
+            // Asegurarse de que el vehículo se marque como activo.
             modelo.Vehiculo.Estado = true;
 
-            // Convertir archivos PDF a Base64
+            // Convertir archivos PDF a Base64, si se han subido.
             if (modelo.Archivo_1 != null)
             {
                 using (var ms = new MemoryStream())
@@ -413,7 +434,6 @@ namespace AppTaxi.Controllers
                     modelo.Vehiculo.Soat = Convert.ToBase64String(ms.ToArray());
                 }
             }
-
             if (modelo.Archivo_2 != null)
             {
                 using (var ms = new MemoryStream())
@@ -423,32 +443,30 @@ namespace AppTaxi.Controllers
                 }
             }
 
+            // Validar el modelo del vehículo.
             ValidarModelo valida = ValidarModelos.validarVehiculo(modelo.Vehiculo);
-            if(valida.Respuesta)
-            {
-                bool respuesta = await _vehiculo.Editar(modelo.Vehiculo, login);
-
-                if (respuesta)
-                {
-                    Transaccion t = Crear_Transaccion("Editar", "Vehiculo");
-                    bool guardar = await _transaccion.Guardar(t, login);
-
-                    return RedirectToAction("Vehiculos");
-                }
-                else
-                {
-                    ViewBag.Mensaje = "No se pudo Guardar";
-                    TempData["Mensaje"] = "No se pudo Guardar";
-                    return RedirectToAction("Editar_Vehiculo", new { IdVehiculo = modelo.Vehiculo.IdVehiculo });
-                }
-            }
-            else
+            if (!valida.Respuesta)
             {
                 TempData["Mensaje"] = valida.Mensaje;
                 return RedirectToAction("Editar_Vehiculo", new { IdVehiculo = modelo.Vehiculo.IdVehiculo });
             }
-            
+
+            // Guardar los cambios mediante la API.
+            bool respuesta = await _vehiculo.Editar(modelo.Vehiculo, login);
+            if (respuesta)
+            {
+                Transaccion t = Crear_Transaccion("Editar", "Vehiculo");
+                await _transaccion.Guardar(t, login);
+                return RedirectToAction("Vehiculos");
+            }
+            else
+            {
+                ViewBag.Mensaje = "No se pudo Guardar";
+                TempData["Mensaje"] = "No se pudo Guardar";
+                return RedirectToAction("Editar_Vehiculo", new { IdVehiculo = modelo.Vehiculo.IdVehiculo });
+            }
         }
+
 
         // Desactiva un vehículo (cambia su estado a false).
         [HttpPost]
@@ -979,7 +997,7 @@ namespace AppTaxi.Controllers
                     else
                     {
                         //TempData["Mensaje"] = textoExtraido;
-                        TempData["Mensaje"] = $"El documento ingresado no es una Cédula o no es legible";
+                        TempData["Mensaje"] = $"El documento ingresado no es una Cédula o no está al 150%";
                         return RedirectToAction("Agregar_Conductor");
                     }
                 }
@@ -1081,7 +1099,7 @@ namespace AppTaxi.Controllers
                         Transaccion t2 = Crear_Transaccion("Guardar", "Usuario");
                         bool guardar2 = await _transaccion.Guardar(t2, login);
 
-                        TempData["Mensaje"] = "Guardado Exitosamente \n" +
+                        TempData["Mensaje"] = $"Guardado Exitosamente \n" +
                             $"Correo: {usuarioConductor.Correo} \n" +
                             $"Contraseña: {contrasenaBase}";
                         return RedirectToAction("Conductores");

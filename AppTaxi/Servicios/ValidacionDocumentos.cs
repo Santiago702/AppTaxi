@@ -29,33 +29,39 @@ namespace AppTaxi.Servicios
         /// </summary>
         public List<string> ConvertirPdfAImagenes(IFormFile pdfFile)
         {
-            List<string> imagenesGeneradas = new List<string>();
-            string pdfPath = Path.Combine(_outputFolder, $"{Guid.NewGuid()}.pdf");
-
-            // Guardar el PDF en el servidor temporalmente
-            using (var stream = new FileStream(pdfPath, FileMode.Create))
+            var imagenesTemporales = new List<string>();
+            var tempPdfPath = Path.GetTempFileName();
+            using (var stream = new FileStream(tempPdfPath, FileMode.Create))
             {
                 pdfFile.CopyTo(stream);
             }
 
-            // Convertir PDF a imágenes
-            using (MagickImageCollection images = new MagickImageCollection(pdfPath))
+            // Configurar opciones: alta resolución
+            var settings = new MagickReadSettings()
             {
-                int index = 0;
+                Density = new Density(300) // 300 DPI
+            };
+
+            using (var images = new MagickImageCollection())
+            {
+                images.Read(tempPdfPath, settings);
+                int contador = 1;
                 foreach (var image in images)
                 {
-                    image.Format = MagickFormat.Png;
-                    string imagePath = Path.Combine(_outputFolder, $"{Path.GetFileNameWithoutExtension(pdfPath)}_{index}.png");
+                    // Opcional: optimizar la imagen (mejorar contraste, binarización, etc.)
+                    image.AutoOrient();
+                    image.Contrast(); // aumenta el contraste
+                    image.Normalize(); // mejora la uniformidad de la imagen
 
-                    image.Write(imagePath);
-                    imagenesGeneradas.Add(imagePath);
-                    index++;
+                    var tempImagePath = Path.Combine(Path.GetTempPath(), $"pagina_{contador}.png");
+                    image.Write(tempImagePath);
+                    imagenesTemporales.Add(tempImagePath);
+                    contador++;
                 }
             }
 
-            // Eliminar el PDF temporal después de la conversión
-            File.Delete(pdfPath);
-            return imagenesGeneradas;
+            File.Delete(tempPdfPath);
+            return imagenesTemporales;
         }
 
         /// <summary>
