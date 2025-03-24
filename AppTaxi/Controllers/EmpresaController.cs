@@ -29,7 +29,8 @@ namespace AppTaxi.Controllers
         private readonly I_Transaccion _transaccion;
         [System.Diagnostics.CodeAnalysis.SuppressMessage("SonarLint", "S1068:Unused private fields should be removed", Justification = "El campo se utiliza mediante inyección y llamadas a sus métodos.")]
         private readonly I_Usuario _usuario;
-        
+        private const string UsuarioNoAutenticado = "Usuario no autenticado.";
+
         // Constructor que recibe las dependencias inyectadas.
         public EmpresaController(I_Vehiculo vehiculo, I_Horario horario, I_Propietario propietario, I_Empresa empresa, I_Conductor conductor, I_Transaccion transaccion, I_Usuario usuario)
         {
@@ -44,7 +45,7 @@ namespace AppTaxi.Controllers
 
 
         // En tu servicio de usuarios
-        
+
         private async Task<int> Cupos()
         {
             var usuario = GetUsuarioFromSession();
@@ -193,21 +194,22 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                Console.WriteLine("No Hay Usuario Registrado");
+                // Aquí puedes optar por lanzar una excepción, registrar el error o redirigir a la página de login.
+                throw new InvalidOperationException("No hay un usuario autenticado en la sesión.");
             }
 
             var login = CreateLogin(usuario);
-
-            Transaccion transaccion = new Transaccion();
-
-            transaccion.IdUsuario = usuario.IdUsuario;
-            transaccion.Modelo = modelo;
-            transaccion.Accion = accion;
-            transaccion.Fecha = DateTime.Now.Date;
-            transaccion.Hora = DateTime.Now.TimeOfDay;
+            Transaccion transaccion = new Transaccion
+            {
+                IdUsuario = usuario.IdUsuario,
+                Modelo = modelo,
+                Accion = accion,
+                Fecha = DateTime.Now.Date,
+                Hora = DateTime.Now.TimeOfDay
+            };
             return transaccion;
-
         }
+
 
 
 
@@ -219,7 +221,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return View();
             }
 
@@ -300,7 +302,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return View();
             }
 
@@ -374,7 +376,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -416,7 +418,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -443,14 +445,14 @@ namespace AppTaxi.Controllers
         }
 
 
-        
+
         // Muestra el formulario para editar un vehículo.
         public async Task<IActionResult> Editar_Vehiculo(int IdVehiculo)
         {
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -478,11 +480,11 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Guardar_Vehiculo(ModeloVista modelo)
         {
-            
+
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
             var login = CreateLogin(usuario);
@@ -554,7 +556,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -588,7 +590,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
             var login = CreateLogin(usuario);
@@ -627,7 +629,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -654,7 +656,7 @@ namespace AppTaxi.Controllers
             {
                 viewModel.Vehiculo.Placa = viewModel.Vehiculo.Placa.ToUpper();
             }
-                
+
             // Validar si la placa ya existe
             if (vehiculos.Any(v => v.Placa == viewModel.Vehiculo.Placa))
             {
@@ -688,7 +690,7 @@ namespace AppTaxi.Controllers
 
             ValidarModelo valida = new ValidarModelo();
             valida = ValidarModelos.validarVehiculo(viewModel.Vehiculo);
-            if(valida.Respuesta)
+            if (valida.Respuesta)
             {
                 // Guardar el vehículo en la BD
                 bool respuesta = await _vehiculo.Guardar(viewModel.Vehiculo, login);
@@ -713,9 +715,9 @@ namespace AppTaxi.Controllers
             else
             {
                 TempData["Mensaje"] = valida.Mensaje;
-                return RedirectToAction("Agregar_Vehiculo","Empresa");
+                return RedirectToAction("Agregar_Vehiculo", "Empresa");
             }
-            
+
         }
 
 
@@ -727,7 +729,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -771,7 +773,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -793,7 +795,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
             ModeloVista modelo = new ModeloVista();
@@ -912,7 +914,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -946,7 +948,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1052,7 +1054,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1094,7 +1096,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
             ModeloVista modelo = new ModeloVista();
@@ -1124,7 +1126,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1152,7 +1154,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1172,7 +1174,7 @@ namespace AppTaxi.Controllers
             }
             ValidarModelo valida = new ValidarModelo();
             valida = ValidarModelos.validarPropietario(modelo.Propietario);
-            if(valida.Respuesta)
+            if (valida.Respuesta)
             {
                 bool respuesta = await _propietario.Editar(modelo.Propietario, login);
 
@@ -1194,7 +1196,7 @@ namespace AppTaxi.Controllers
                 TempData["Mensaje"] = valida.Mensaje;
                 return RedirectToAction("Editar_Propietario", new { IdPropietario = modelo.Propietario.IdPropietario });
             }
-            
+
         }
 
         // Desactiva un propietario (cambia su estado a false).
@@ -1209,7 +1211,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1243,7 +1245,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1259,11 +1261,11 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Crear_Propietario(ModeloVista modelo)
         {
-            
+
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1274,7 +1276,7 @@ namespace AppTaxi.Controllers
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             var propietarios = await _propietario.Lista(login);
 
-            
+
             modelo.Propietario.Estado = true;
             modelo.Propietario.IdEmpresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario)?.IdEmpresa ?? 0;
 
@@ -1333,7 +1335,7 @@ namespace AppTaxi.Controllers
             }
             ValidarModelo valida = new ValidarModelo();
             valida = ValidarModelos.validarPropietario(modelo.Propietario);
-            if(valida.Respuesta)
+            if (valida.Respuesta)
             {
                 // Guarda el propietario.
                 bool respuesta = await _propietario.Guardar(modelo.Propietario, login);
@@ -1359,7 +1361,7 @@ namespace AppTaxi.Controllers
                 TempData["Mensaje"] = valida.Mensaje;
                 return View("Agregar_Propietario");
             }
-            
+
         }
 
         //------------------------- Horario ----------------------------------------------
@@ -1368,7 +1370,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1393,7 +1395,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
             var login = CreateLogin(usuario);
@@ -1422,11 +1424,11 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Guardar_Horario(ModeloVista modelo)
         {
-            
+
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
             var login = CreateLogin(usuario);
@@ -1448,7 +1450,7 @@ namespace AppTaxi.Controllers
             {
                 ViewBag.Mensaje = "No se pudo Guardar";
                 TempData["Mensaje"] = "No se pudo Guardar";
-                return RedirectToAction("Editar_Horario", new { IdHorario= modelo.Horario.IdHorario });
+                return RedirectToAction("Editar_Horario", new { IdHorario = modelo.Horario.IdHorario });
             }
 
         }
@@ -1459,7 +1461,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1476,7 +1478,7 @@ namespace AppTaxi.Controllers
                 Transaccion t = Crear_Transaccion("Eliminar", "Horario");
                 bool guardar = await _transaccion.Guardar(t, login);
                 TempData["Mensaje"] = "Eliminado Correctamente";
-                return RedirectToAction("Ver_Horario_Conductor", new { IdConductor = horario.IdConductor});
+                return RedirectToAction("Ver_Horario_Conductor", new { IdConductor = horario.IdConductor });
             }
             else
             {
@@ -1491,7 +1493,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1516,11 +1518,11 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Crear_Horario(ModeloVista modelo)
         {
-            
+
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1568,20 +1570,20 @@ namespace AppTaxi.Controllers
                 ViewBag.Mensaje = "Ya hay un horario asignado en ese horario";
 
                 return RedirectToAction("Asignar_Horario", new { IdConductor = modelo.Conductor.IdConductor });
-                
+
             }
             // Guardar el horario
-            
+
         }
 
         [HttpPost]
         public async Task<IActionResult> Crear_RangoHorarios(ModeloVista modelo, DateTime FechaInicio, DateTime FechaFin, TimeSpan HoraInicio, TimeSpan HoraFin, int IdVehiculo)
         {
-            
+
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1656,7 +1658,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1694,7 +1696,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1732,7 +1734,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1770,7 +1772,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1802,7 +1804,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1857,13 +1859,13 @@ namespace AppTaxi.Controllers
             return View(modelo);
         }
 
-                
+
         public async Task<IActionResult> Ver_Horario_Vehiculo(int IdVehiculo)
         {
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1872,7 +1874,7 @@ namespace AppTaxi.Controllers
             modelo.Vehiculo = await _vehiculo.Obtener(IdVehiculo, login);
             var Horarios = await _horario.Lista(login);
             var conductoresTotales = await _conductor.Lista(login);
-            
+
 
             modelo.Horarios = Horarios?.Where(h => h.IdVehiculo == IdVehiculo).ToList();
 
@@ -1891,13 +1893,13 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
             var login = CreateLogin(usuario);
 
-            var conductor = await _conductor.Obtener(IdConductor,login);
+            var conductor = await _conductor.Obtener(IdConductor, login);
             Usuario usuarioConductor = new Usuario();
             usuarioConductor.Correo = conductor.Correo;
             usuarioConductor.Contrasena = conductor.Contrasena;
@@ -1912,7 +1914,7 @@ namespace AppTaxi.Controllers
 
             ValidarModelo valida = new ValidarModelo();
             valida = ValidarModelos.validarUsuario(usuarioConductor);
-            if(valida.Respuesta)
+            if (valida.Respuesta)
             {
                 bool respuesta = await _usuario.Guardar(usuarioConductor, login);
                 if (respuesta)
@@ -1931,7 +1933,7 @@ namespace AppTaxi.Controllers
             {
                 TempData["Mensaje"] = $"No se pudo Crear: {valida.Mensaje}";
             }
-            
+
             return RedirectToAction("Detalle_Conductor", new { IdConductor = IdConductor });
 
         }
