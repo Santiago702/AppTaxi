@@ -68,6 +68,22 @@ namespace AppTaxi.Servicios
             return imagenesTemporales;
         }
 
+        public string ProcesarSoloPrimeraPagina(IFormFile pdfFile)
+        {
+            var imagenes = ConvertirPdfAImagenes(pdfFile);
+
+            if (imagenes.Count == 0)
+            {
+                return "No se pudo extraer texto, el PDF está vacío o no se pudo procesar.";
+            }
+
+            string textoExtraido = ProcesarImagenConOCR(imagenes[0]); // Solo procesa la primera imagen
+
+            // Eliminar solo la primera imagen (o todas si lo deseas)
+            File.Delete(imagenes[0]);
+
+            return textoExtraido.Trim();
+        }
 
         /// <summary>
         /// Procesa una imagen con OCR y extrae el texto.
@@ -88,11 +104,14 @@ namespace AppTaxi.Servicios
         {
             var imagenes = ConvertirPdfAImagenes(pdfFile);
             string textoExtraido = "";
+            int pagina = 1;
 
             foreach (var imagen in imagenes)
             {
+                textoExtraido += $"--- Página {pagina} ---\n";
                 textoExtraido += ProcesarImagenConOCR(imagen) + "\n";
-                File.Delete(imagen); // Eliminar la imagen temporal
+                //File.Delete(imagen); // Eliminar la imagen temporal
+                pagina++;
             }
 
             return textoExtraido.Trim();

@@ -136,7 +136,7 @@
                                 <div class="row g-3">
                                     <div class="col-md-4">
                                         <label class="form-label"><i class="fas fa-file-pdf me-2"></i>Cédula</label>
-                                        <input type="file" class="form-control" asp-for="Conductor.DocumentoCedula">
+                                        <input type="file" class="form-control" asp-for="Archivo_1">
                                         <small class="text-muted">
                                             <i class="fas fa-check-circle me-2"></i>
                                             @(string.IsNullOrEmpty(Model.Conductor.DocumentoCedula) ? "No cargado" : "Cargado")
@@ -144,7 +144,7 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label"><i class="fas fa-file-medical me-2"></i>EPS</label>
-                                        <input type="file" class="form-control" asp-for="Conductor.DocumentoEps">
+                                        <input type="file" class="form-control" asp-for="Archivo_2">
                                         <small class="text-muted">
                                             <i class="fas fa-check-circle me-2"></i>
                                             @(string.IsNullOrEmpty(Model.Conductor.DocumentoEps) ? "No cargado" : "Cargado")
@@ -152,7 +152,7 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label"><i class="fas fa-shield-alt me-2"></i>ARL</label>
-                                        <input type="file" class="form-control" asp-for="Conductor.DocumentoArl">
+                                        <input type="file" class="form-control" asp-for="Archivo_3">
                                         <small class="text-muted">
                                             <i class="fas fa-check-circle me-2"></i>
                                             @(string.IsNullOrEmpty(Model.Conductor.DocumentoArl) ? "No cargado" : "Cargado")
