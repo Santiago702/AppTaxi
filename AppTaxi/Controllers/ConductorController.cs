@@ -37,7 +37,50 @@ namespace AppTaxi.Controllers
         }
 
         //------------ Métodos auxiliares ------------
+        //Remover Validaciones del Modelo: 
+        private void RemoverValidaciones(ModeloVista modelo)
+        {
+            if (modelo.Vehiculo == null)
+                ModelState.Remove(nameof(modelo.Vehiculo));
+            if (modelo.Conductor == null)
+                ModelState.Remove(nameof(modelo.Conductor));
+            if (modelo.Empresa == null)
+                ModelState.Remove(nameof(modelo.Empresa));
+            if (modelo.Propietario == null)
+                ModelState.Remove(nameof(modelo.Propietario));
+            if (modelo.Horario == null)
+                ModelState.Remove(nameof(modelo.Horario));
+            if (modelo.Usuario == null)
+                ModelState.Remove(nameof(modelo.Usuario));
+            if (modelo.Transaccion == null)
+                ModelState.Remove(nameof(modelo.Transaccion));
 
+            if (modelo.Contador == null)
+                ModelState.Remove(nameof(modelo.Contador));
+            if (modelo.Vehiculos == null)
+                ModelState.Remove(nameof(modelo.Vehiculos));
+            if (modelo.Conductores == null)
+                ModelState.Remove(nameof(modelo.Conductores));
+            if (modelo.Empresas == null)
+                ModelState.Remove(nameof(modelo.Empresas));
+            if (modelo.Propietarios == null)
+                ModelState.Remove(nameof(modelo.Propietarios));
+            if (modelo.Horarios == null)
+                ModelState.Remove(nameof(modelo.Horarios));
+            if (modelo.Usuarios == null)
+                ModelState.Remove(nameof(modelo.Usuarios));
+            if (modelo.Transacciones == null)
+                ModelState.Remove(nameof(modelo.Transacciones));
+
+            if (modelo.Archivo_1 == null)
+                ModelState.Remove(nameof(modelo.Archivo_1));
+            if (modelo.Archivo_2 == null)
+                ModelState.Remove(nameof(modelo.Archivo_2));
+            if (modelo.Archivo_3 == null)
+                ModelState.Remove(nameof(modelo.Archivo_3));
+            if (modelo.Archivo_4 == null)
+                ModelState.Remove(nameof(modelo.Archivo_4));
+        }
         // Obtiene el usuario actual desde la sesión.
         private Usuario GetUsuarioFromSession()
         {
@@ -64,7 +107,6 @@ namespace AppTaxi.Controllers
                 throw new InvalidOperationException("No hay un usuario autenticado en la sesión.");
             }
 
-            var login = CreateLogin(usuario);
             Transaccion transaccion = new Transaccion
             {
                 IdUsuario = usuario.IdUsuario,
@@ -85,7 +127,7 @@ namespace AppTaxi.Controllers
                 return View();
             }
 
-            var login = CreateLogin(usuario);
+            
 
 
             return View(usuario);
@@ -194,6 +236,12 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Agregar_Horario(ModeloVista modelo)
         {
+            RemoverValidaciones(modelo);
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
 
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
@@ -294,6 +342,7 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar_Horario(int IdHorario)
         {
+
             if (!ModelState.IsValid)
             {
                 TempData["Mensaje"] = "Error con el modelo";

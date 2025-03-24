@@ -30,7 +30,11 @@ namespace AppTaxi.Servicios
         public List<string> ConvertirPdfAImagenes(IFormFile pdfFile)
         {
             var imagenesTemporales = new List<string>();
-            var tempPdfPath = Path.GetTempFileName();
+
+            // Genera un nombre aleatorio y combínalo con la ruta temporal
+            string randomFileName = Path.GetRandomFileName();
+            string tempPdfPath = Path.Combine(Path.GetTempPath(), randomFileName);
+
             using (var stream = new FileStream(tempPdfPath, FileMode.Create))
             {
                 pdfFile.CopyTo(stream);
@@ -52,7 +56,6 @@ namespace AppTaxi.Servicios
                     image.AutoOrient();
                     image.Contrast(); // aumenta el contraste
                     image.Normalize(); // mejora la uniformidad de la imagen
-
                     var tempImagePath = Path.Combine(Path.GetTempPath(), $"pagina_{contador}.png");
                     image.Write(tempImagePath);
                     imagenesTemporales.Add(tempImagePath);
@@ -60,9 +63,11 @@ namespace AppTaxi.Servicios
                 }
             }
 
+            // Elimina el archivo PDF temporal
             File.Delete(tempPdfPath);
             return imagenesTemporales;
         }
+
 
         /// <summary>
         /// Procesa una imagen con OCR y extrae el texto.
