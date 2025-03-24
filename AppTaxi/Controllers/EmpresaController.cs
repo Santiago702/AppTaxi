@@ -63,7 +63,73 @@ namespace AppTaxi.Controllers
             return Contador;
         }
         //------------ Métodos auxiliares ------------
+        //Convierte a Base64: 
+        private async Task<string> ConvertirArchivoABase64(IFormFile archivo)
+        {
+            if (archivo == null)
+                return null;
 
+            using (var ms = new MemoryStream())
+            {
+                await archivo.CopyToAsync(ms);
+                return Convert.ToBase64String(ms.ToArray());
+            }
+        }
+        //Procesar Cedula:
+        private async Task<bool> ProcesarDocumentoCedula(ModeloVista modelo)
+        {
+            try
+            {
+                var sistema = new ValidacionDocumentos();
+                string textoExtraido = sistema.ProcesarPdfConOCR(modelo.Archivo_1);
+                bool esDocumento = sistema.Contiene(textoExtraido.ToUpper(), new string[] { "REPÚBLICA", "COLOMBIA" }, 'Y');
+
+                if (!esDocumento)
+                {
+                    TempData["Mensaje"] = "El documento ingresado no es una Cédula o no es legible";
+                    return false;
+                }
+
+                modelo.Conductor.DocumentoCedula = await ConvertirArchivoABase64(modelo.Archivo_1);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                TempData["Mensaje"] = $"Error al procesar el documento: {ex.Message}";
+                return false;
+            }
+        }
+
+        //Cedula Propietario
+        private async Task<bool> ProcesarArchivoCedulaPropietario(ModeloVista modelo)
+        {
+            if (modelo.Archivo_1 == null || modelo.Archivo_1.Length == 0)
+            {
+                ViewBag.Mensaje = "No se ha subido ningún archivo.";
+                return false;
+            }
+
+            try
+            {
+                var sistema = new ValidacionDocumentos();
+                string textoExtraido = sistema.ProcesarPdfConOCR(modelo.Archivo_1);
+                bool esDocumento = sistema.Contiene(textoExtraido.ToUpper(), new string[] { "REPÚBLICA", "COLOMBIA" }, 'Y');
+
+                if (!esDocumento)
+                {
+                    ViewBag.Mensaje = "El documento ingresado no es una Cédula o no es legible";
+                    return false;
+                }
+
+                modelo.Propietario.DocumentoCedula = await ConvertirArchivoABase64(modelo.Archivo_1);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Mensaje = $"Error al procesar el documento: {ex.Message}";
+                return false;
+            }
+        }
         //Encripta Todo
         public async void Contrasenas(Models.Login login)
         {
@@ -412,6 +478,7 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Guardar_Vehiculo(ModeloVista modelo)
         {
+            
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -479,6 +546,11 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar_Vehiculo(int IdVehiculo)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -547,7 +619,11 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Crear_Vehiculo(ModeloVista viewModel)
         {
-
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -740,7 +816,9 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Guardar_Conductor(ModeloVista modelo)
         {
-            Encriptado enc = new Encriptado();
+            if (!ModelState.IsValid)
+                return RedirectToAction("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
+
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -749,156 +827,88 @@ namespace AppTaxi.Controllers
             }
 
             var login = CreateLogin(usuario);
-
-            var empresas = await _empresa.Lista(login);
-            var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
-
+            var empresa = (await _empresa.Lista(login))
+                          .FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             modelo.Conductor.Estado = true;
 
             var conductor = await _conductor.Obtener(modelo.Conductor.IdConductor, login);
-            var usuarios = await _usuario.Lista(login);
+            var usuarioConductor = (await _usuario.Lista(login))
+                                   .FirstOrDefault(u => u.Correo == conductor.Correo && u.Contrasena == conductor.Contrasena);
 
-            var usuarioConductor = usuarios.Where(u => u.Correo == conductor.Correo && u.Contrasena == conductor.Contrasena).FirstOrDefault();
-
-            // Convertir archivos PDF a Base64
+            // Procesa el archivo de cédula
             if (modelo.Archivo_1 != null && modelo.Archivo_1.Length > 0)
             {
-                try
-                {
-                    ValidacionDocumentos sistema = new ValidacionDocumentos();
-
-                    // Aplicar OCR al PDF y extraer texto
-                    string textoExtraido = sistema.ProcesarPdfConOCR(modelo.Archivo_1);
-
-                    // Validar si el documento es una cédula
-                    bool esDocumento = sistema.Contiene(textoExtraido.ToUpper(), new string[] { "REPÚBLICA", "COLOMBIA" }, 'Y');
-
-                    if (esDocumento)
-                    {
-                        using (var ms = new MemoryStream())
-                        {
-                            await modelo.Archivo_1.CopyToAsync(ms);
-                            modelo.Conductor.DocumentoCedula = Convert.ToBase64String(ms.ToArray());
-                        }
-                    }
-                    else
-                    {
-                        //TempData["Mensaje"] = textoExtraido;
-                        TempData["Mensaje"] = $"El documento ingresado no es una Cédula o no es legible";
-                        return RedirectToAction("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    TempData["Mensaje"] = $"Error al procesar el documento: {ex.Message}";
+                if (!await ProcesarDocumentoCedula(modelo))
                     return RedirectToAction("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
-                }
             }
-            string contraSinSha = "";
 
-            if (modelo.Archivo_2 != null)
+            // Procesa los demás archivos
+            modelo.Conductor.DocumentoEps = await ConvertirArchivoABase64(modelo.Archivo_2);
+            modelo.Conductor.DocumentoArl = await ConvertirArchivoABase64(modelo.Archivo_3);
+            modelo.Conductor.Foto = await ConvertirArchivoABase64(modelo.Archivo_4);
+
+            string contraSinSha = string.Empty;
+            if (!string.IsNullOrEmpty(modelo.Conductor.Contrasena))
             {
-                using (var ms = new MemoryStream())
-                {
-                    await modelo.Archivo_2.CopyToAsync(ms);
-                    modelo.Conductor.DocumentoEps = Convert.ToBase64String(ms.ToArray());
-                }
+                contraSinSha = modelo.Conductor.Contrasena;
+                modelo.Conductor.Contrasena = Encriptado.GetSHA256(modelo.Conductor.Contrasena);
             }
 
-            if (modelo.Archivo_3 != null)
-            {
-                using (var ms = new MemoryStream())
-                {
-                    await modelo.Archivo_3.CopyToAsync(ms);
-                    modelo.Conductor.DocumentoArl = Convert.ToBase64String(ms.ToArray());
-                }
-            }
-
-            if (modelo.Archivo_4 != null)
-            {
-                using (var ms = new MemoryStream())
-                {
-                    await modelo.Archivo_4.CopyToAsync(ms);
-                    modelo.Conductor.Foto = Convert.ToBase64String(ms.ToArray());
-                }
-            }
-            if (modelo.Conductor.Contrasena != null)
-            {
-                //--------------------------------------------- Encriptado
-
-                 contraSinSha = modelo.Conductor.Contrasena;
-                string Contrasena = Encriptado.GetSHA256(modelo.Conductor.Contrasena);
-                modelo.Conductor.Contrasena = Contrasena;
-            }
-
-
-            ValidarModelo valida = new ValidarModelo();
-
-            if (usuarioConductor != null)
-            {
-                valida = ValidarModelos.validarConductor(modelo.Conductor);
-                if(valida.Respuesta)
-                {
-                    bool respuesta = await _conductor.Editar(modelo.Conductor, login);
-                    if (respuesta)
-                    {
-                        usuarioConductor.Correo = modelo.Conductor.Correo;
-                        usuarioConductor.Contrasena = modelo.Conductor.Contrasena;
-                        usuarioConductor.Foto = modelo.Conductor.Foto;
-                        usuarioConductor.Nombre = modelo.Conductor.Nombre;
-                        usuarioConductor.Telefono = modelo.Conductor.Telefono;
-                        usuarioConductor.Direccion = modelo.Conductor.Direccion;
-                        usuarioConductor.Ciudad = modelo.Conductor.Ciudad;
-                        usuarioConductor.Celular = modelo.Conductor.Celular;
-                        usuarioConductor.Estado = true;
-                        bool respuestaUsuario = await _usuario.Editar(usuarioConductor, login);
-                        if (respuestaUsuario)
-                        {
-                            Transaccion t1 = Crear_Transaccion("Editar", "Conductor");
-                            bool guardar1 = await _transaccion.Guardar(t1, login);
-                            Transaccion t2 = Crear_Transaccion("Editar", "Usuario");
-                            bool guardar2 = await _transaccion.Guardar(t2, login);
-
-                            TempData["Mensaje"] = $"Editado Correctamente \n" +
-                                $"Correo: {usuarioConductor.Correo}  \n" +
-                                $"Contraseña: {contraSinSha}";
-                            return RedirectToAction("Conductores");
-                        }
-                        else
-                        {
-                            TempData["Mensaje"] = "No se pudo Guardar el Usuario";
-                            return RedirectToAction("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
-                        }
-
-                    }
-                    else
-                    {
-                        TempData["Mensaje"] = $"Respuesta Negativa al Guardar";
-                        return RedirectToAction("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
-                    }
-                }
-                else
-                {
-                    TempData["Mensaje"] = valida.Mensaje;
-
-                    return RedirectToAction("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
-                }
-                
-
-            }
-            else
+            if (usuarioConductor == null)
             {
                 TempData["Mensaje"] = "No se encontró usuario asignado";
-                
                 return RedirectToAction("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
             }
+
+            var validacion = ValidarModelos.validarConductor(modelo.Conductor);
+            if (!validacion.Respuesta)
+            {
+                TempData["Mensaje"] = validacion.Mensaje;
+                return RedirectToAction("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
+            }
+
+            if (!await _conductor.Editar(modelo.Conductor, login))
+            {
+                TempData["Mensaje"] = "Respuesta Negativa al Guardar";
+                return RedirectToAction("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
+            }
+
+            // Actualiza los datos del usuario conductor
+            usuarioConductor.Correo = modelo.Conductor.Correo;
+            usuarioConductor.Contrasena = modelo.Conductor.Contrasena;
+            usuarioConductor.Foto = modelo.Conductor.Foto;
+            usuarioConductor.Nombre = modelo.Conductor.Nombre;
+            usuarioConductor.Telefono = modelo.Conductor.Telefono;
+            usuarioConductor.Direccion = modelo.Conductor.Direccion;
+            usuarioConductor.Ciudad = modelo.Conductor.Ciudad;
+            usuarioConductor.Celular = modelo.Conductor.Celular;
+            usuarioConductor.Estado = true;
+
+            if (!await _usuario.Editar(usuarioConductor, login))
+            {
+                TempData["Mensaje"] = "No se pudo Guardar el Usuario";
+                return RedirectToAction("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
+            }
+
+            // Registra las transacciones correspondientes
+            await _transaccion.Guardar(Crear_Transaccion("Editar", "Conductor"), login);
+            await _transaccion.Guardar(Crear_Transaccion("Editar", "Usuario"), login);
+
+            TempData["Mensaje"] = $"Editado Correctamente \nCorreo: {usuarioConductor.Correo} \nContraseña: {contraSinSha}";
+            return RedirectToAction("Conductores");
         }
+
 
         // Desactiva un conductor (cambia su estado a false).
         [HttpPost]
         public async Task<IActionResult> Eliminar_Conductor(int IdConductor)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -953,184 +963,86 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Crear_Conductor(ModeloVista modelo)
         {
+            if (!ModelState.IsValid)
+                return RedirectToAction("Agregar_Conductor");
+
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                ViewBag.Mensaje = "Usuario no autenticado.";
+                TempData["Mensaje"] = "Usuario no autenticado.";
                 return RedirectToAction("Login", "Inicio");
             }
 
             var login = CreateLogin(usuario);
-
-            var empresas = await _empresa.Lista(login);
-
-            var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
-
+            var empresa = (await _empresa.Lista(login)).FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
             ViewBag.Cupos = empresa.Cupos - await Cupos();
-            var conductores = await _conductor.Lista(login);
 
             modelo.Conductor.Estado = true;
-            modelo.Conductor.IdEmpresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario)?.IdEmpresa ?? 0;
+            modelo.Conductor.IdEmpresa = empresa?.IdEmpresa ?? 0;
+            var conductores = await _conductor.Lista(login);
 
-            // Valida si el conductor ya está registrado.
-            if (conductores.Any(c => c.NumeroCedula == modelo.Conductor.NumeroCedula || c.Correo == modelo.Conductor.Correo || c.Nombre == modelo.Conductor.Nombre))
+            if (conductores.Any(c => c.NumeroCedula == modelo.Conductor.NumeroCedula ||
+                                     c.Correo == modelo.Conductor.Correo ||
+                                     c.Nombre == modelo.Conductor.Nombre))
             {
                 TempData["Mensaje"] = "El conductor ya está registrado";
                 return RedirectToAction("Agregar_Conductor");
             }
 
-            // Convertir archivos PDF a Base64
-            if (modelo.Archivo_1 != null && modelo.Archivo_1.Length > 0)
+            // Procesa el archivo de la cédula
+            if (!await ProcesarDocumentoCedula(modelo))
+                return RedirectToAction("Agregar_Conductor");
+
+            // Procesa los demás archivos
+            modelo.Conductor.DocumentoEps = await ConvertirArchivoABase64(modelo.Archivo_2);
+            modelo.Conductor.DocumentoArl = await ConvertirArchivoABase64(modelo.Archivo_3);
+            modelo.Conductor.Foto = await ConvertirArchivoABase64(modelo.Archivo_4) ?? "N/F";
+
+            string contrasenaBase = (modelo.Conductor.NumeroCedula != 0 && !string.IsNullOrEmpty(modelo.Conductor.Nombre))
+                                     ? Encriptado.GenerarContrasena(modelo.Conductor.NumeroCedula.ToString(), modelo.Conductor.Nombre)
+                                     : "Password123";
+            modelo.Conductor.Contrasena = Encriptado.GetSHA256(contrasenaBase);
+
+            var validacion = ValidarModelos.validarConductor(modelo.Conductor);
+            if (!validacion.Respuesta)
             {
-                try
-                {
-
-                    ValidacionDocumentos sistema = new ValidacionDocumentos();
-
-                    // Aplicar OCR al PDF y extraer texto
-                    string textoExtraido = sistema.ProcesarPdfConOCR(modelo.Archivo_1);
-
-                    // Validar si el documento es una cédula
-                    bool esDocumento = sistema.Contiene(textoExtraido.ToUpper(), new string[] { "REPÚBLICA", "COLOMBIA"}, 'Y');
-
-                    if (esDocumento)
-                    {
-                        using (var ms = new MemoryStream())
-                        {
-                            await modelo.Archivo_1.CopyToAsync(ms);
-                            modelo.Conductor.DocumentoCedula = Convert.ToBase64String(ms.ToArray());
-                        }
-                    }
-                    else
-                    {
-                        //TempData["Mensaje"] = textoExtraido;
-                        TempData["Mensaje"] = $"El documento ingresado no es una Cédula o no está al 150%";
-                        return RedirectToAction("Agregar_Conductor");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    TempData["Mensaje"] = $"Error al procesar el documento: {ex.Message}";
-                    return RedirectToAction("Agregar_Conductor");
-                }
-            }
-            else
-            {
-                TempData["Mensaje"] = "No se ha subido ningún archivo.";
+                TempData["Mensaje"] = validacion.Mensaje;
                 return RedirectToAction("Agregar_Conductor");
             }
 
-
-            if (modelo.Archivo_2 != null)
+            if (!await _conductor.Guardar(modelo.Conductor, login))
             {
-                using (var ms = new MemoryStream())
-                {
-                    await modelo.Archivo_2.CopyToAsync(ms);
-                    modelo.Conductor.DocumentoEps = Convert.ToBase64String(ms.ToArray());
-                }
-            }
-
-
-            if (modelo.Archivo_3 != null)
-            {
-                using (var ms = new MemoryStream())
-                {
-                    await modelo.Archivo_3.CopyToAsync(ms);
-                    modelo.Conductor.DocumentoArl = Convert.ToBase64String(ms.ToArray());
-                }
-            }
-
-
-            if (modelo.Archivo_4 != null)
-            {
-                using (var ms = new MemoryStream())
-                {
-                    await modelo.Archivo_4.CopyToAsync(ms);
-                    modelo.Conductor.Foto = Convert.ToBase64String(ms.ToArray());
-                }
-            }
-            else
-            {
-                modelo.Conductor.Foto = "N/F";
-            }
-            
-            string contrasenaBase;
-            if (modelo.Conductor.NumeroCedula != 0 && modelo.Conductor.Nombre != null)
-            {
-                contrasenaBase = Encriptado.GenerarContrasena(modelo.Conductor.NumeroCedula.ToString(), modelo.Conductor.Nombre);
-
-            }
-            else
-            {
-                contrasenaBase = "Password123";
-            }
-
-            string contrasena = Encriptado.GetSHA256(contrasenaBase);
-            modelo.Conductor.Contrasena = contrasena;
-
-
-            // Guarda el conductor.
-            ValidarModelo valida = new ValidarModelo();
-            valida = ValidarModelos.validarConductor(modelo.Conductor);
-            if(valida.Respuesta)
-            {
-                
-                bool respuesta = await _conductor.Guardar(modelo.Conductor, login);
-
-                if (respuesta)
-                {
-                    Usuario usuarioConductor = new Usuario();
-
-                    usuarioConductor.Correo = modelo.Conductor.Correo;
-                    usuarioConductor.Contrasena = modelo.Conductor.Contrasena;
-                    usuarioConductor.Foto = modelo.Conductor.Foto;
-                    usuarioConductor.Nombre = modelo.Conductor.Nombre;
-                    usuarioConductor.Telefono = modelo.Conductor.Telefono;
-                    usuarioConductor.Direccion = modelo.Conductor.Direccion;
-                    usuarioConductor.Ciudad = modelo.Conductor.Ciudad;
-                    usuarioConductor.Celular = modelo.Conductor.Celular;
-                    usuarioConductor.Estado = true;
-                    usuarioConductor.IdRol = 1006;
-
-                    bool crearUsuario = await _usuario.Guardar(usuarioConductor, login);
-                    if (crearUsuario)
-                    {
-                        var conductoresGuardados = await _conductor.Lista(login);
-                        var conductorGuardado = conductoresGuardados.FirstOrDefault(c => c.NumeroCedula == modelo.Conductor.NumeroCedula);
-                        ViewBag.IdConductor = conductorGuardado?.IdConductor;
-                        ViewBag.Exito = true;
-
-
-                        Transaccion t1 = Crear_Transaccion("Guardar", "Conductor");
-                        bool guardar1 = await _transaccion.Guardar(t1, login);
-                        Transaccion t2 = Crear_Transaccion("Guardar", "Usuario");
-                        bool guardar2 = await _transaccion.Guardar(t2, login);
-
-                        TempData["Mensaje"] = $"Guardado Exitosamente \n" +
-                            $"Correo: {usuarioConductor.Correo} \n" +
-                            $"Contraseña: {contrasenaBase}";
-                        return RedirectToAction("Conductores");
-                    }
-                    else
-                    {
-                        TempData["Mensaje"] = "No se pudo Crear el Usuario";
-                        return RedirectToAction("Agregar_Conductor");
-                    }
-
-                }
-                else
-                {
-                    TempData["Mensaje"] = "No se pudo Guardar";
-                    return RedirectToAction("Agregar_Conductor");
-                }
-            }
-            else
-            {
-                TempData["Mensaje"] = valida.Mensaje;
+                TempData["Mensaje"] = "No se pudo Guardar";
                 return RedirectToAction("Agregar_Conductor");
             }
-            
+
+            var usuarioConductor = new Usuario
+            {
+                Correo = modelo.Conductor.Correo,
+                Contrasena = modelo.Conductor.Contrasena,
+                Foto = modelo.Conductor.Foto,
+                Nombre = modelo.Conductor.Nombre,
+                Telefono = modelo.Conductor.Telefono,
+                Direccion = modelo.Conductor.Direccion,
+                Ciudad = modelo.Conductor.Ciudad,
+                Celular = modelo.Conductor.Celular,
+                Estado = true,
+                IdRol = 1006
+            };
+
+            if (!await _usuario.Guardar(usuarioConductor, login))
+            {
+                TempData["Mensaje"] = "No se pudo Crear el Usuario";
+                return RedirectToAction("Agregar_Conductor");
+            }
+
+            await _transaccion.Guardar(Crear_Transaccion("Guardar", "Conductor"), login);
+            await _transaccion.Guardar(Crear_Transaccion("Guardar", "Usuario"), login);
+
+            TempData["Mensaje"] = $"Guardado Exitosamente \nCorreo: {usuarioConductor.Correo} \nContraseña: {contrasenaBase}";
+            return RedirectToAction("Conductores");
         }
+
 
         //---------------------------- Propietarios ------------------------------------
 
@@ -1232,6 +1144,11 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Guardar_Propietario(ModeloVista modelo)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -1284,6 +1201,11 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar_Propietario(int IdPropietario)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -1337,6 +1259,7 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Crear_Propietario(ModeloVista modelo)
         {
+            
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -1499,6 +1422,7 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Guardar_Horario(ModeloVista modelo)
         {
+            
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -1592,6 +1516,7 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Crear_Horario(ModeloVista modelo)
         {
+            
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -1652,6 +1577,7 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Crear_RangoHorarios(ModeloVista modelo, DateTime FechaInicio, DateTime FechaFin, TimeSpan HoraInicio, TimeSpan HoraFin, int IdVehiculo)
         {
+            
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -1760,6 +1686,11 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Recuperar_Conductor(int IdConductor)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -1793,6 +1724,11 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Recuperar_Vehiculo(int IdVehiculo)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -1826,6 +1762,11 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Recuperar_Propietario(int IdPropietario)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {

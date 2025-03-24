@@ -403,6 +403,7 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Guardar_Empresa(ModeloVista modelo)
         {
+            
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -446,6 +447,7 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Agregar_Empresa(ModeloVista modelo)
         {
+            
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -588,6 +590,7 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Crear_Usuario(ModeloVista modelo)
         {
+            
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -648,6 +651,11 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Deshabilitar_Usuario(int IdUsuario)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -675,6 +683,11 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Habilitar_Usuario(int IdUsuario)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -718,6 +731,7 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Guardar_Usuario(ModeloVista modelo)
         {
+            
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {

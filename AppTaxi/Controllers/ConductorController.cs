@@ -185,6 +185,7 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Agregar_Horario(ModeloVista modelo)
         {
+            
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -192,7 +193,7 @@ namespace AppTaxi.Controllers
                 return View();
             }
             var login = CreateLogin(usuario);
-
+            
             // Obtener datos necesarios
             var horariosTotales = await _horario.Lista(login);
             var conductoresTotales = await _conductor.Lista(login);
@@ -284,6 +285,11 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar_Horario(int IdHorario)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
