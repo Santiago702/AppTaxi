@@ -15,12 +15,19 @@ namespace AppTaxi.Controllers
     public class EmpresaController : Controller
     {
         // Servicios inyectados para manejar las operaciones de vehículos, horarios, propietarios, empresas y conductores.
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("SonarLint", "S1068:Unused private fields should be removed", Justification = "El campo se utiliza mediante inyección y llamadas a sus métodos.")]
         private readonly I_Vehiculo _vehiculo;
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("SonarLint", "S1068:Unused private fields should be removed", Justification = "El campo se utiliza mediante inyección y llamadas a sus métodos.")]
         private readonly I_Horario _horario;
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("SonarLint", "S1068:Unused private fields should be removed", Justification = "El campo se utiliza mediante inyección y llamadas a sus métodos.")]
         private readonly I_Propietario _propietario;
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("SonarLint", "S1068:Unused private fields should be removed", Justification = "El campo se utiliza mediante inyección y llamadas a sus métodos.")]
         private readonly I_Empresa _empresa;
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("SonarLint", "S1068:Unused private fields should be removed", Justification = "El campo se utiliza mediante inyección y llamadas a sus métodos.")]
         private readonly I_Conductor _conductor;
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("SonarLint", "S1068:Unused private fields should be removed", Justification = "El campo se utiliza mediante inyección y llamadas a sus métodos.")]
         private readonly I_Transaccion _transaccion;
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("SonarLint", "S1068:Unused private fields should be removed", Justification = "El campo se utiliza mediante inyección y llamadas a sus métodos.")]
         private readonly I_Usuario _usuario;
         
         // Constructor que recibe las dependencias inyectadas.
