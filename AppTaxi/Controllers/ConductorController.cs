@@ -269,7 +269,6 @@ namespace AppTaxi.Controllers
             // Obtener datos necesarios
             var horariosTotales = await _horario.Lista(login);
             var conductoresTotales = await _conductor.Lista(login);
-            //var vehiculosTotales = await _vehiculo.Lista(login);
 
             var conductor = conductoresTotales.FirstOrDefault(c => c.Correo == usuario.Correo && c.Contrasena == usuario.Contrasena);
 

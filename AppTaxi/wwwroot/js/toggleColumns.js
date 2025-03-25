@@ -10,7 +10,7 @@
 
     // Ocultar columnas al cargar la página si los checkboxes están desmarcados
     $(".column-toggle").each(function () {
-        var columnClass = ".col-" + $(this).val();
+        const columnClass = ".col-" + $(this).val();
         if (!$(this).is(":checked")) {
             $(columnClass).hide();
         }
