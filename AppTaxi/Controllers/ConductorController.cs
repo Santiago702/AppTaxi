@@ -23,6 +23,7 @@ namespace AppTaxi.Controllers
         [System.Diagnostics.CodeAnalysis.SuppressMessage("SonarLint", "S1068:Unused private fields should be removed", Justification = "El campo se utiliza mediante inyección y llamadas a sus métodos.")]
         private readonly I_Transaccion _transaccion;
         private const string UsuarioNoAutenticado = "Usuario no autenticado.";
+        private const string Mensaje = "Mensaje";
 
         // Constructor que recibe las dependencias inyectadas.
         public ConductorController(I_Vehiculo vehiculo, I_Horario horario, I_Propietario propietario, I_Empresa empresa, I_Conductor conductor, I_Usuario usuario, I_Transaccion transaccion)
@@ -82,7 +83,7 @@ namespace AppTaxi.Controllers
         }
 
         // Crea un objeto Login a partir del usuario actual.
-        private Models.Login CreateLogin(Usuario usuario)
+        private static Models.Login CreateLogin(Usuario usuario)
         {
             return new Models.Login { Correo = usuario.Correo, Contrasena = usuario.Contrasena };
         }
@@ -112,11 +113,11 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return View();
             }
 
-            
+
 
 
             return View(usuario);
@@ -128,7 +129,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return View();
             }
 
@@ -148,7 +149,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return View();
             }
 
@@ -173,7 +174,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return View();
             }
 
@@ -201,13 +202,13 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return View();
             }
 
@@ -233,14 +234,14 @@ namespace AppTaxi.Controllers
             RemoverValidaciones(modelo);
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
 
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return View();
             }
             var login = CreateLogin(usuario);
@@ -254,7 +255,7 @@ namespace AppTaxi.Controllers
 
             if (conductor == null)
             {
-                TempData["Mensaje"] = "Conductor no encontrado";
+                TempData[Mensaje] = "Conductor no encontrado";
                 return RedirectToAction("Registro_Horario", "Conductor");
             }
 
@@ -264,7 +265,7 @@ namespace AppTaxi.Controllers
             // Validación 1: Rango horario válido (00:00 a 23:59)
             if (modelo.Horario.HoraInicio >= modelo.Horario.HoraFin)
             {
-                TempData["Mensaje"] = "El horario de fin debe ser posterior al de inicio y ambos dentro del mismo día";
+                TempData[Mensaje] = "El horario de fin debe ser posterior al de inicio y ambos dentro del mismo día";
                 return RedirectToAction("Crear_Horario", new { IdConductor = conductor.IdConductor });
             }
 
@@ -284,7 +285,7 @@ namespace AppTaxi.Controllers
                     modelo.Horario.HoraInicio < h.HoraFin &&
                     modelo.Horario.HoraFin > h.HoraInicio);
 
-                TempData["Mensaje"] = $"Ya tienes un horario asignado que se cruza: " +
+                TempData[Mensaje] = $"Ya tienes un horario asignado que se cruza: " +
                                      $"{horarioConflictivo.HoraInicio:hh\\:mm} - " +
                                      $"{horarioConflictivo.HoraFin:hh\\:mm}";
                 return RedirectToAction("Crear_Horario", new { IdConductor = conductor.IdConductor });
@@ -309,7 +310,7 @@ namespace AppTaxi.Controllers
                 var conductorConflictivo = await _conductor.Obtener(horarioConflictivo.IdConductor, login);
                 var vehiculoConflictivo = await _vehiculo.Obtener(horarioConflictivo.IdVehiculo, login);
 
-                TempData["Mensaje"] = $"El vehículo {vehiculoConflictivo.Placa} está siendo usado por: " +
+                TempData[Mensaje] = $"El vehículo {vehiculoConflictivo.Placa} está siendo usado por: " +
                                      $"{conductorConflictivo.Nombre} ({conductorConflictivo.Telefono}) " +
                                      $"de {horarioConflictivo.HoraInicio:hh\\:mm} a " +
                                      $"{horarioConflictivo.HoraFin:hh\\:mm}";
@@ -323,12 +324,12 @@ namespace AppTaxi.Controllers
             {
                 Transaccion t = Crear_Transaccion("Crear", "Horario");
                 bool guardar = await _transaccion.Guardar(t, login);
-                TempData["Mensaje"] = "Horario guardado correctamente";
+                TempData[Mensaje] = "Horario guardado correctamente";
                 return RedirectToAction("Registro_Horario", "Conductor");
             }
             else
             {
-                TempData["Mensaje"] = "Error al guardar el horario";
+                TempData[Mensaje] = "Error al guardar el horario";
                 return RedirectToAction("Crear_Horario", new { IdConductor = conductor.IdConductor });
             }
         }
@@ -339,13 +340,13 @@ namespace AppTaxi.Controllers
 
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return View();
             }
             var login = CreateLogin(usuario);
@@ -355,12 +356,12 @@ namespace AppTaxi.Controllers
             {
                 Transaccion t = Crear_Transaccion("Eliminar", "Horario");
                 bool guardar = await _transaccion.Guardar(t, login);
-                TempData["Mensaje"] = "Horario eliminado correctamente";
+                TempData[Mensaje] = "Horario eliminado correctamente";
 
             }
             else
             {
-                TempData["Mensaje"] = "Error al eliminar el horario";
+                TempData[Mensaje] = "Error al eliminar el horario";
 
             }
             return RedirectToAction("Registro_Horario", "Conductor");

@@ -30,6 +30,7 @@ namespace AppTaxi.Controllers
         [System.Diagnostics.CodeAnalysis.SuppressMessage("SonarLint", "S1068:Unused private fields should be removed", Justification = "El campo se utiliza mediante inyección y llamadas a sus métodos.")]
         private readonly I_Transaccion _transaccion;
         private const string UsuarioNoAutenticado = "Usuario no autenticado.";
+        private const string Mensaje = "Mensaje";
         // Constructor que recibe las dependencias inyectadas.
         public SecretariaController(I_Vehiculo vehiculo, I_Horario horario, I_Propietario propietario, I_Empresa empresa, I_Conductor conductor, I_Usuario usuario, I_Transaccion transaccion)
         {
@@ -87,7 +88,7 @@ namespace AppTaxi.Controllers
         }
 
         // Crea un objeto Login a partir del usuario actual.
-        private Models.Login CreateLogin(Usuario usuario)
+        private static Models.Login CreateLogin(Usuario usuario)
         {
             return new Models.Login { Correo = usuario.Correo, Contrasena = usuario.Contrasena };
         }
@@ -101,7 +102,7 @@ namespace AppTaxi.Controllers
                 throw new InvalidOperationException("No hay un usuario autenticado en la sesión.");
             }
 
-            
+
             Transaccion transaccion = new Transaccion
             {
                 IdUsuario = usuario.IdUsuario,
@@ -160,7 +161,7 @@ namespace AppTaxi.Controllers
             };
 
             int i = 0;
-            if(modelo.Empresas.Count > 0)
+            if (modelo.Empresas.Count > 0)
             {
                 while (true)
                 {
@@ -175,13 +176,13 @@ namespace AppTaxi.Controllers
                     }
                 }
             }
-            
+
             return View(modelo);
         }
 
         public async Task<IActionResult> Detalle_Empresa(int IdEmpresa)
         {
-            
+
 
             if (!ModelState.IsValid)
             {
@@ -208,7 +209,7 @@ namespace AppTaxi.Controllers
         //----------------------------- Vista de Objetos registrados por Empresa
         public async Task<IActionResult> Conductores(int IdEmpresa)
         {
-            
+
 
             if (!ModelState.IsValid)
             {
@@ -335,7 +336,7 @@ namespace AppTaxi.Controllers
 
         public async Task<IActionResult> Detalle_Conductor(int IdConductor)
         {
-            
+
 
             if (!ModelState.IsValid)
             {
@@ -357,7 +358,7 @@ namespace AppTaxi.Controllers
 
         public async Task<IActionResult> Detalle_Propietario(int IdPropietario)
         {
-            
+
 
             if (!ModelState.IsValid)
             {
@@ -384,7 +385,7 @@ namespace AppTaxi.Controllers
 
         public async Task<IActionResult> Detalle_Vehiculo(int IdVehiculo)
         {
-            
+
 
             if (!ModelState.IsValid)
             {
@@ -410,7 +411,7 @@ namespace AppTaxi.Controllers
 
         public async Task<IActionResult> Ver_Horario(int IdConductor)
         {
-           
+
 
             if (!ModelState.IsValid)
             {
@@ -507,7 +508,7 @@ namespace AppTaxi.Controllers
                 return BadRequest();
             }
             RemoverValidaciones(modelo);
-            
+
             if (!ModelState.IsValid)
             {
                 TempData["Mensaje"] = "Error con el modelo";

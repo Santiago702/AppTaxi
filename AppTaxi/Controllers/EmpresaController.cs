@@ -30,6 +30,7 @@ namespace AppTaxi.Controllers
         [System.Diagnostics.CodeAnalysis.SuppressMessage("SonarLint", "S1068:Unused private fields should be removed", Justification = "El campo se utiliza mediante inyección y llamadas a sus métodos.")]
         private readonly I_Usuario _usuario;
         private const string UsuarioNoAutenticado = "Usuario no autenticado.";
+        private const string Mensaje = "Mensaje";
 
         // Constructor que recibe las dependencias inyectadas.
         public EmpresaController(I_Vehiculo vehiculo, I_Horario horario, I_Propietario propietario, I_Empresa empresa, I_Conductor conductor, I_Transaccion transaccion, I_Usuario usuario)
@@ -84,7 +85,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = "No Hay Usuario Registrado";
+                TempData[Mensaje] = "No Hay Usuario Registrado";
             }
 
             var login = CreateLogin(usuario);
@@ -123,7 +124,7 @@ namespace AppTaxi.Controllers
 
                 if (!esDocumento)
                 {
-                    TempData["Mensaje"] = $"El documento ingresado no es una Cédula o no es legible {textoExtraido}";
+                    TempData[Mensaje] = $"El documento ingresado no es una Cédula o no es legible {textoExtraido}";
                     return false;
                 }
 
@@ -132,7 +133,7 @@ namespace AppTaxi.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Mensaje"] = $"Error al procesar el documento: {ex.Message}";
+                TempData[Mensaje] = $"Error al procesar el documento: {ex.Message}";
                 return false;
             }
         }
@@ -142,7 +143,7 @@ namespace AppTaxi.Controllers
         {
             if (modelo.Archivo_1 == null || modelo.Archivo_1.Length == 0)
             {
-                TempData["Mensaje"] = "No se ha subido ningún archivo.";
+                TempData[Mensaje] = "No se ha subido ningún archivo.";
                 return false;
             }
 
@@ -157,7 +158,7 @@ namespace AppTaxi.Controllers
 
                 if (!esDocumento)
                 {
-                    TempData["Mensaje"] = $"El documento ingresado no es una Cédula o no es legible {textoExtraido}";
+                    TempData[Mensaje] = $"El documento ingresado no es una Cédula o no es legible {textoExtraido}";
                     return false;
                 }
 
@@ -166,7 +167,7 @@ namespace AppTaxi.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Mensaje"] = $"Error al procesar el documento: {ex.Message}";
+                TempData[Mensaje] = $"Error al procesar el documento: {ex.Message}";
                 return false;
             }
         }
@@ -220,7 +221,7 @@ namespace AppTaxi.Controllers
         }
 
         // Crea un objeto Login a partir del usuario actual.
-        private Models.Login CreateLogin(Usuario usuario)
+        private static Models.Login CreateLogin(Usuario usuario)
         {
 
             return new Models.Login { Correo = usuario.Correo, Contrasena = usuario.Contrasena };
@@ -260,7 +261,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return View();
             }
 
@@ -285,7 +286,7 @@ namespace AppTaxi.Controllers
             var empresaActual = empresasTotales.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
             if (empresaActual == null)
             {
-                TempData["Mensaje"] = "Empresa no encontrada.";
+                TempData[Mensaje] = "Empresa no encontrada.";
                 return View();
             }
             int idEmpresa = empresaActual.IdEmpresa;
@@ -328,7 +329,7 @@ namespace AppTaxi.Controllers
             // Evitar múltiples llamadas a Cupos() almacenando su resultado en una variable
             int cuposDisponibles = empresaActual.Cupos - await Cupos();
             ViewBag.Cupos = cuposDisponibles;
-            TempData["Mensaje"] = $"Bienvenid@ {usuario.Nombre}";
+            TempData[Mensaje] = $"Bienvenid@ {usuario.Nombre}";
 
             return View(datosIniciales);
         }
@@ -340,13 +341,13 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return View();
             }
 
@@ -420,7 +421,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -438,7 +439,7 @@ namespace AppTaxi.Controllers
             var empresaActual = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
             if (empresaActual == null)
             {
-                TempData["Mensaje"] = "Empresa no encontrada.";
+                TempData[Mensaje] = "Empresa no encontrada.";
                 return View(new List<Vehiculo>());
             }
             int idEmpresa = empresaActual.IdEmpresa;
@@ -461,13 +462,13 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -500,13 +501,13 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -537,20 +538,20 @@ namespace AppTaxi.Controllers
 
             if (modelo.Vehiculo.IdVehiculo <= 0)
             {
-                TempData["Mensaje"] = "El ID del vehiculo es inválido.";
+                TempData[Mensaje] = "El ID del vehiculo es inválido.";
                 return BadRequest();
             }
             RemoverValidaciones(modelo);
             // Verificar que el modelo es válido
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "El modelo contiene errores de validación.";
+                TempData[Mensaje] = "El modelo contiene errores de validación.";
                 return View("Editar_Vehiculo", modelo);
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
             var login = CreateLogin(usuario);
@@ -589,7 +590,7 @@ namespace AppTaxi.Controllers
             ValidarModelo valida = ValidarModelos.validarVehiculo(modelo.Vehiculo);
             if (!valida.Respuesta)
             {
-                TempData["Mensaje"] = valida.Mensaje;
+                TempData[Mensaje] = valida.Mensaje;
                 return RedirectToAction("Editar_Vehiculo", new { IdVehiculo = modelo.Vehiculo.IdVehiculo });
             }
 
@@ -603,8 +604,8 @@ namespace AppTaxi.Controllers
             }
             else
             {
-                TempData["Mensaje"] = "No se pudo Guardar";
-                TempData["Mensaje"] = "No se pudo Guardar";
+                TempData[Mensaje] = "No se pudo Guardar";
+                TempData[Mensaje] = "No se pudo Guardar";
                 return RedirectToAction("Editar_Vehiculo", new { IdVehiculo = modelo.Vehiculo.IdVehiculo });
             }
         }
@@ -616,18 +617,18 @@ namespace AppTaxi.Controllers
         {
             if (IdVehiculo <= 0)
             {
-                TempData["Mensaje"] = "El ID es inválido.";
+                TempData[Mensaje] = "El ID es inválido.";
                 return BadRequest();
             }
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -649,8 +650,8 @@ namespace AppTaxi.Controllers
             }
             else
             {
-                TempData["Mensaje"] = "No se pudo Guardar";
-                TempData["Mensaje"] = "No se pudo Guardar";
+                TempData[Mensaje] = "No se pudo Guardar";
+                TempData[Mensaje] = "No se pudo Guardar";
                 return RedirectToAction("Editar_Vehiculo", new { IdVehiculo = IdVehiculo });
             }
         }
@@ -661,7 +662,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
             var login = CreateLogin(usuario);
@@ -695,13 +696,13 @@ namespace AppTaxi.Controllers
             RemoverValidaciones(viewModel);
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -714,7 +715,7 @@ namespace AppTaxi.Controllers
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             if (empresa.Cupos - await Cupos() <= 0)
             {
-                TempData["Mensaje"] = "No se puede agregar, No hay Cupos";
+                TempData[Mensaje] = "No se puede agregar, No hay Cupos";
                 //var propietariosTotales = await _propietario.Lista(login);
                 //viewModel.Propietarios = propietariosTotales?.Where(p => p.IdEmpresa == viewModel.Vehiculo.IdEmpresa && p.Estado).ToList();
 
@@ -732,7 +733,7 @@ namespace AppTaxi.Controllers
             // Validar si la placa ya existe
             if (vehiculos.Any(v => v.Placa == viewModel.Vehiculo.Placa))
             {
-                TempData["Mensaje"] = "La placa ya está en uso";
+                TempData[Mensaje] = "La placa ya está en uso";
                 var propietariosTotales = await _propietario.Lista(login);
                 viewModel.Propietarios = propietariosTotales?.Where(p => p.IdEmpresa == viewModel.Vehiculo.IdEmpresa && p.Estado).ToList();
 
@@ -772,12 +773,12 @@ namespace AppTaxi.Controllers
                     Transaccion t = Crear_Transaccion("Guardar", "Vehiculo");
                     bool guardar = await _transaccion.Guardar(t, login);
 
-                    TempData["Mensaje"] = "Agregado Correctamente";
+                    TempData[Mensaje] = "Agregado Correctamente";
                     return RedirectToAction("Vehiculos");
                 }
                 else
                 {
-                    TempData["Mensaje"] = $"No se pudo Guardar {viewModel.Vehiculo.Placa}";
+                    TempData[Mensaje] = $"No se pudo Guardar {viewModel.Vehiculo.Placa}";
                     var propietariosTotales = await _propietario.Lista(login);
                     viewModel.Propietarios = propietariosTotales?.Where(p => p.IdEmpresa == viewModel.Vehiculo.IdEmpresa && p.Estado).ToList();
 
@@ -786,7 +787,7 @@ namespace AppTaxi.Controllers
             }
             else
             {
-                TempData["Mensaje"] = valida.Mensaje;
+                TempData[Mensaje] = valida.Mensaje;
                 return RedirectToAction("Agregar_Vehiculo", "Empresa");
             }
 
@@ -801,7 +802,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -844,13 +845,13 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -870,14 +871,14 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             Encriptado enc = new Encriptado();
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
             ModeloVista modelo = new ModeloVista();
@@ -906,14 +907,14 @@ namespace AppTaxi.Controllers
 
             if (modelo.Conductor?.IdConductor <= 0)
             {
-                TempData["Mensaje"] = "El ID del conductor es inválido.";
+                TempData[Mensaje] = "El ID del conductor es inválido.";
                 return BadRequest();
             }
 
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = "Usuario no autenticado.";
+                TempData[Mensaje] = "Usuario no autenticado.";
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -957,20 +958,20 @@ namespace AppTaxi.Controllers
 
             if (usuarioConductor == null)
             {
-                TempData["Mensaje"] = "No se encontró usuario asignado";
+                TempData[Mensaje] = "No se encontró usuario asignado";
                 return View("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
             }
 
             var validacion = ValidarModelos.validarConductor(modelo.Conductor);
             if (!validacion.Respuesta)
             {
-                TempData["Mensaje"] = validacion.Mensaje;
+                TempData[Mensaje] = validacion.Mensaje;
                 return View("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
             }
 
             if (!await _conductor.Editar(modelo.Conductor, login))
             {
-                TempData["Mensaje"] = "Respuesta Negativa al Guardar";
+                TempData[Mensaje] = "Respuesta Negativa al Guardar";
                 return View("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
             }
 
@@ -987,7 +988,7 @@ namespace AppTaxi.Controllers
 
             if (!await _usuario.Editar(usuarioConductor, login))
             {
-                TempData["Mensaje"] = "No se pudo Guardar el Usuario";
+                TempData[Mensaje] = "No se pudo Guardar el Usuario";
                 return RedirectToAction("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
             }
 
@@ -997,11 +998,11 @@ namespace AppTaxi.Controllers
 
             if (!string.IsNullOrEmpty(contraSinSha))
             {
-                TempData["Mensaje"] = $"Editado Correctamente \nCorreo: {usuarioConductor.Correo} \nContraseña: {contraSinSha}";
+                TempData[Mensaje] = $"Editado Correctamente \nCorreo: {usuarioConductor.Correo} \nContraseña: {contraSinSha}";
             }
             else
             {
-                TempData["Mensaje"] = $"Editado Correctamente \nCorreo: {usuarioConductor.Correo}";
+                TempData[Mensaje] = $"Editado Correctamente \nCorreo: {usuarioConductor.Correo}";
             }
             return RedirectToAction("Conductores");
         }
@@ -1014,18 +1015,18 @@ namespace AppTaxi.Controllers
         {
             if (IdConductor <= 0)
             {
-                TempData["Mensaje"] = "El ID del conductor es inválido.";
+                TempData[Mensaje] = "El ID del conductor es inválido.";
                 return BadRequest();
             }
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1047,8 +1048,8 @@ namespace AppTaxi.Controllers
             }
             else
             {
-                TempData["Mensaje"] = "No se pudo Guardar";
-                TempData["Mensaje"] = "No se pudo Guardar";
+                TempData[Mensaje] = "No se pudo Guardar";
+                TempData[Mensaje] = "No se pudo Guardar";
                 return RedirectToAction("Editar_Conductor", new { IdConductor = IdConductor });
             }
         }
@@ -1059,7 +1060,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1084,7 +1085,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = "Usuario no autenticado.";
+                TempData[Mensaje] = "Usuario no autenticado.";
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1100,7 +1101,7 @@ namespace AppTaxi.Controllers
                                      c.Correo == modelo.Conductor.Correo ||
                                      c.Nombre == modelo.Conductor.Nombre))
             {
-                TempData["Mensaje"] = "El conductor ya está registrado";
+                TempData[Mensaje] = "El conductor ya está registrado";
                 return RedirectToAction("Agregar_Conductor");
             }
 
@@ -1121,13 +1122,13 @@ namespace AppTaxi.Controllers
             var validacion = ValidarModelos.validarConductor(modelo.Conductor);
             if (!validacion.Respuesta)
             {
-                TempData["Mensaje"] = validacion.Mensaje;
+                TempData[Mensaje] = validacion.Mensaje;
                 return RedirectToAction("Agregar_Conductor");
             }
 
             if (!await _conductor.Guardar(modelo.Conductor, login))
             {
-                TempData["Mensaje"] = "No se pudo Guardar";
+                TempData[Mensaje] = "No se pudo Guardar";
                 return RedirectToAction("Agregar_Conductor");
             }
 
@@ -1147,14 +1148,14 @@ namespace AppTaxi.Controllers
 
             if (!await _usuario.Guardar(usuarioConductor, login))
             {
-                TempData["Mensaje"] = "No se pudo Crear el Usuario";
+                TempData[Mensaje] = "No se pudo Crear el Usuario";
                 return RedirectToAction("Agregar_Conductor");
             }
 
             await _transaccion.Guardar(Crear_Transaccion("Guardar", "Conductor"), login);
             await _transaccion.Guardar(Crear_Transaccion("Guardar", "Usuario"), login);
 
-            TempData["Mensaje"] = $"Guardado Exitosamente \nCorreo: {usuarioConductor.Correo} \nContraseña: {contrasenaBase}";
+            TempData[Mensaje] = $"Guardado Exitosamente \nCorreo: {usuarioConductor.Correo} \nContraseña: {contrasenaBase}";
             return RedirectToAction("Conductores");
         }
 
@@ -1167,7 +1168,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1208,13 +1209,13 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
             ModeloVista modelo = new ModeloVista();
@@ -1233,7 +1234,7 @@ namespace AppTaxi.Controllers
 
             //var ocrService = new ValidacionDocumentos();
             //string texto = ocrService.ProcesarImagenConOCR("wwwroot/temp/Cedula3.png");
-            //TempData["Mensaje"] = texto;
+            //TempData[Mensaje] = texto;
             return View(modelo);
         }
 
@@ -1242,14 +1243,14 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             ModeloVista modelo = new ModeloVista();
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1271,19 +1272,19 @@ namespace AppTaxi.Controllers
         {
             if (modelo.Propietario.IdPropietario <= 0)
             {
-                TempData["Mensaje"] = "El ID del propietario es inválido.";
+                TempData[Mensaje] = "El ID del propietario es inválido.";
                 return BadRequest();
             }
             RemoverValidaciones(modelo);
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1315,14 +1316,14 @@ namespace AppTaxi.Controllers
                 }
                 else
                 {
-                    TempData["Mensaje"] = "No se pudo Guardar";
-                    TempData["Mensaje"] = "No se pudo Guardar";
+                    TempData[Mensaje] = "No se pudo Guardar";
+                    TempData[Mensaje] = "No se pudo Guardar";
                     return RedirectToAction("Editar_Propietario", new { IdPropietario = modelo.Propietario.IdPropietario });
                 }
             }
             else
             {
-                TempData["Mensaje"] = valida.Mensaje;
+                TempData[Mensaje] = valida.Mensaje;
                 return RedirectToAction("Editar_Propietario", new { IdPropietario = modelo.Propietario.IdPropietario });
             }
 
@@ -1332,20 +1333,20 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar_Propietario(int IdPropietario)
         {
-            if(IdPropietario <= 0)
+            if (IdPropietario <= 0)
             {
-                TempData["Mensaje"] = "El ID del propietario es inválido.";
+                TempData[Mensaje] = "El ID del propietario es inválido.";
                 return BadRequest();
             }
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1367,8 +1368,8 @@ namespace AppTaxi.Controllers
             }
             else
             {
-                TempData["Mensaje"] = "No se pudo Guardar";
-                TempData["Mensaje"] = "No se pudo Guardar";
+                TempData[Mensaje] = "No se pudo Guardar";
+                TempData[Mensaje] = "No se pudo Guardar";
                 return RedirectToAction("Editar_Propietario", new { IdPropietario = IdPropietario });
             }
         }
@@ -1379,7 +1380,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1398,13 +1399,13 @@ namespace AppTaxi.Controllers
             RemoverValidaciones(modelo);
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1422,7 +1423,7 @@ namespace AppTaxi.Controllers
             // Valida si el propietario ya está registrado.
             if (propietarios.Any(c => c.NumeroCedula == modelo.Propietario.NumeroCedula || c.Correo == modelo.Propietario.Correo || c.Nombre == modelo.Propietario.Nombre))
             {
-                TempData["Mensaje"] = "El propietario ya está registrado";
+                TempData[Mensaje] = "El propietario ya está registrado";
                 return RedirectToAction("Agregar_Propietario");
             }
             if (modelo.Archivo_4 != null)
@@ -1456,20 +1457,20 @@ namespace AppTaxi.Controllers
                     }
                     else
                     {
-                        //TempData["Mensaje"] = textoExtraido;
-                        TempData["Mensaje"] = $"El documento ingresado no es una Cédula o no es legible";
+                        //TempData[Mensaje] = textoExtraido;
+                        TempData[Mensaje] = $"El documento ingresado no es una Cédula o no es legible";
                         return View("Agregar_Propietario");
                     }
                 }
                 catch (Exception ex)
                 {
-                    TempData["Mensaje"] = $"Error al procesar el documento: {ex.Message}";
+                    TempData[Mensaje] = $"Error al procesar el documento: {ex.Message}";
                     return View("Agregar_Propietario");
                 }
             }
             else
             {
-                TempData["Mensaje"] = "No se ha subido ningún archivo.";
+                TempData[Mensaje] = "No se ha subido ningún archivo.";
                 return View("Agregar_Propietario");
             }
             ValidarModelo valida = new ValidarModelo();
@@ -1491,13 +1492,13 @@ namespace AppTaxi.Controllers
                 }
                 else
                 {
-                    TempData["Mensaje"] = "No se pudo Guardar";
+                    TempData[Mensaje] = "No se pudo Guardar";
                     return View("Agregar_Propietario");
                 }
             }
             else
             {
-                TempData["Mensaje"] = valida.Mensaje;
+                TempData[Mensaje] = valida.Mensaje;
                 return View("Agregar_Propietario");
             }
 
@@ -1508,13 +1509,13 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1538,13 +1539,13 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
             var login = CreateLogin(usuario);
@@ -1575,20 +1576,20 @@ namespace AppTaxi.Controllers
         {
             if (modelo.Horario.IdHorario <= 0)
             {
-                TempData["Mensaje"] = "El ID del horario es inválido.";
+                TempData[Mensaje] = "El ID del horario es inválido.";
                 return BadRequest();
             }
             RemoverValidaciones(modelo);
             // Verificar que el modelo es válido
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "El modelo contiene errores de validación.";
+                TempData[Mensaje] = "El modelo contiene errores de validación.";
                 return RedirectToAction("Editar_Horario", new { IdHorario = modelo.Horario.IdHorario });
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
             var login = CreateLogin(usuario);
@@ -1608,7 +1609,7 @@ namespace AppTaxi.Controllers
             }
             else
             {
-                TempData["Mensaje"] = "No se pudo Guardar";
+                TempData[Mensaje] = "No se pudo Guardar";
                 return RedirectToAction("Editar_Horario", new { IdHorario = modelo.Horario.IdHorario });
             }
 
@@ -1619,20 +1620,20 @@ namespace AppTaxi.Controllers
         {
             if (IdHorario <= 0)
             {
-                TempData["Mensaje"] = "El ID del horario es inválido.";
+                TempData[Mensaje] = "El ID del horario es inválido.";
                 return BadRequest();
             }
-            
+
             // Verificar que el modelo es válido
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "El modelo contiene errores de validación.";
+                TempData[Mensaje] = "El modelo contiene errores de validación.";
                 return RedirectToAction("Horarios");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1648,13 +1649,13 @@ namespace AppTaxi.Controllers
             {
                 Transaccion t = Crear_Transaccion("Eliminar", "Horario");
                 bool guardar = await _transaccion.Guardar(t, login);
-                TempData["Mensaje"] = "Eliminado Correctamente";
+                TempData[Mensaje] = "Eliminado Correctamente";
                 return RedirectToAction("Ver_Horario_Conductor", new { IdConductor = horario.IdConductor });
             }
             else
             {
-                TempData["Mensaje"] = "No se pudo Guardar";
-                TempData["Mensaje"] = "No se pudo Guardar";
+                TempData[Mensaje] = "No se pudo Guardar";
+                TempData[Mensaje] = "No se pudo Guardar";
                 return RedirectToAction("Horarios");
             }
         }
@@ -1664,7 +1665,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1693,18 +1694,18 @@ namespace AppTaxi.Controllers
             // Verificar que el modelo es válido
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "El modelo contiene errores de validación.";
+                TempData[Mensaje] = "El modelo contiene errores de validación.";
                 return RedirectToAction("Asignar_Horario", new { IdConductor = modelo.Conductor.IdConductor });
             }
             if (modelo.Horario.IdConductor <= 0)
             {
-                TempData["Mensaje"] = "El ID del horario es inválido.";
+                TempData[Mensaje] = "El ID del horario es inválido.";
                 return BadRequest();
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1733,23 +1734,23 @@ namespace AppTaxi.Controllers
                 if (respuesta)
                 {
 
-                    TempData["Mensaje"] = "Horario guardado correctamente.";
+                    TempData[Mensaje] = "Horario guardado correctamente.";
                     Transaccion t = Crear_Transaccion("Guardar", "Horario");
                     bool guardar = await _transaccion.Guardar(t, login);
                     return RedirectToAction("Ver_Horario_Conductor", new { IdConductor = modelo.Horario.IdConductor });
                 }
                 else
                 {
-                    TempData["Mensaje"] = "No se pudo Guardar el Horario";
-                    TempData["Mensaje"] = "No se pudo Guardar  el Horario";
+                    TempData[Mensaje] = "No se pudo Guardar el Horario";
+                    TempData[Mensaje] = "No se pudo Guardar  el Horario";
                     return RedirectToAction("Asignar_Horario", new { IdConductor = modelo.Conductor.IdConductor });
                 }
             }
             else
             {
-                TempData["Mensaje"] = "Ya hay un horario asignado en ese horario";
+                TempData[Mensaje] = "Ya hay un horario asignado en ese horario";
 
-                TempData["Mensaje"] = "Ya hay un horario asignado en ese horario";
+                TempData[Mensaje] = "Ya hay un horario asignado en ese horario";
 
                 return RedirectToAction("Asignar_Horario", new { IdConductor = modelo.Conductor.IdConductor });
 
@@ -1763,20 +1764,20 @@ namespace AppTaxi.Controllers
         {
             if (modelo.Conductor.IdConductor <= 0)
             {
-                TempData["Mensaje"] = "El ID es inválido.";
+                TempData[Mensaje] = "El ID es inválido.";
                 return BadRequest();
             }
             RemoverValidaciones(modelo);
             // Verificar que el modelo es válido
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "El modelo contiene errores de validación.";
+                TempData[Mensaje] = "El modelo contiene errores de validación.";
                 return RedirectToAction("Asignar_Horario", new { IdConductor = modelo.Conductor.IdConductor });
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1801,8 +1802,8 @@ namespace AppTaxi.Controllers
 
                 if (existeConflicto)
                 {
-                    TempData["Mensaje"] = "Ya hay un horario asignado en el rango de fechas y horas asignadas";
-                    TempData["Mensaje"] = "Ya hay un horario asignado en el rango de fechas y horas asignadas";
+                    TempData[Mensaje] = "Ya hay un horario asignado en el rango de fechas y horas asignadas";
+                    TempData[Mensaje] = "Ya hay un horario asignado en el rango de fechas y horas asignadas";
                     return RedirectToAction("Asignar_Horario", new { IdConductor = modelo.Conductor.IdConductor });
                 }
             }
@@ -1833,14 +1834,14 @@ namespace AppTaxi.Controllers
                 Transaccion t = Crear_Transaccion("Guardar", "Horarios");
                 bool guardar = await _transaccion.Guardar(t, login);
 
-                TempData["Mensaje"] = "Horarios guardados correctamente.";
-                TempData["Mensaje"] = "Horarios guardados correctamente.";
+                TempData[Mensaje] = "Horarios guardados correctamente.";
+                TempData[Mensaje] = "Horarios guardados correctamente.";
                 return RedirectToAction("Ver_Horario", new { IdConductor = modelo.Conductor.IdConductor });
             }
             else
             {
-                TempData["Mensaje"] = "No se pudo Guardar el Horario";
-                TempData["Mensaje"] = "No se pudo Guardar  el Horario";
+                TempData[Mensaje] = "No se pudo Guardar el Horario";
+                TempData[Mensaje] = "No se pudo Guardar  el Horario";
                 return RedirectToAction("Asignar_Horario", new { IdConductor = modelo.Conductor.IdConductor });
             }
         }
@@ -1851,7 +1852,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1883,13 +1884,13 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1911,7 +1912,7 @@ namespace AppTaxi.Controllers
             }
             else
             {
-                TempData["Mensaje"] = "No se pudo Recuperar";
+                TempData[Mensaje] = "No se pudo Recuperar";
                 return NoContent();
             }
         }
@@ -1921,13 +1922,13 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1949,7 +1950,7 @@ namespace AppTaxi.Controllers
             }
             else
             {
-                TempData["Mensaje"] = "No se pudo Recuperar";
+                TempData[Mensaje] = "No se pudo Recuperar";
                 return NoContent();
             }
         }
@@ -1959,13 +1960,13 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -1987,7 +1988,7 @@ namespace AppTaxi.Controllers
             }
             else
             {
-                TempData["Mensaje"] = "No se pudo Recuperar";
+                TempData[Mensaje] = "No se pudo Recuperar";
                 return NoContent();
             }
         }
@@ -1997,7 +1998,7 @@ namespace AppTaxi.Controllers
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -2057,13 +2058,13 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -2090,18 +2091,18 @@ namespace AppTaxi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Mensaje"] = "Error con el modelo";
+                TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
             if (IdConductor <= 0)
             {
-                TempData["Mensaje"] = "El ID es inválido.";
+                TempData[Mensaje] = "El ID es inválido.";
                 return BadRequest();
             }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
-                TempData["Mensaje"] = UsuarioNoAutenticado;
+                TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
 
@@ -2127,19 +2128,19 @@ namespace AppTaxi.Controllers
                 bool respuesta = await _usuario.Guardar(usuarioConductor, login);
                 if (respuesta)
                 {
-                    TempData["Mensaje"] = "Usuario Creado";
+                    TempData[Mensaje] = "Usuario Creado";
 
 
                 }
                 else
                 {
-                    TempData["Mensaje"] = "Error al Crear Usuario";
+                    TempData[Mensaje] = "Error al Crear Usuario";
 
                 }
             }
             else
             {
-                TempData["Mensaje"] = $"No se pudo Crear: {valida.Mensaje}";
+                TempData[Mensaje] = $"No se pudo Crear: {valida.Mensaje}";
             }
 
             return RedirectToAction("Detalle_Conductor", new { IdConductor = IdConductor });
