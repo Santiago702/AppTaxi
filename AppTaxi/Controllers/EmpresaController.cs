@@ -111,7 +111,7 @@ namespace AppTaxi.Controllers
             }
         }
         //Procesar Cedula:
-        private async Task<bool> ProcesarDocumentoCedula(ModeloVista modelo)
+        private bool ProcesarDocumentoCedula(ModeloVista modelo)
         {
             try
             {
@@ -128,7 +128,7 @@ namespace AppTaxi.Controllers
                     return false;
                 }
 
-                modelo.Conductor.DocumentoCedula = await ConvertirArchivoABase64(modelo.Archivo_1);
+                //modelo.Conductor.DocumentoCedula = await ConvertirArchivoABase64(modelo.Archivo_1);
                 return true;
             }
             catch (Exception ex)
@@ -138,39 +138,7 @@ namespace AppTaxi.Controllers
             }
         }
 
-        //Cedula Propietario
-        private async Task<bool> ProcesarArchivoCedulaPropietario(ModeloVista modelo)
-        {
-            if (modelo.Archivo_1 == null || modelo.Archivo_1.Length == 0)
-            {
-                TempData[Mensaje] = "No se ha subido ningún archivo.";
-                return false;
-            }
 
-            try
-            {
-                var sistema = new ValidacionDocumentos();
-                string textoExtraido = sistema.ProcesarPdfConOCR(modelo.Archivo_1);
-                bool esDocumento = (
-                        sistema.Contiene(textoExtraido.ToUpper(), new string[] { "REPÚBLICA", "COLOMBIA" }, 'Y')
-                        || sistema.Contiene(textoExtraido.ToUpper(), new string[] { "FECHA", "LUGAR" }, 'Y')
-                        || sistema.Contiene(textoExtraido.ToUpper(), new string[] { "FECHA", "NACIMIENTO" }, 'Y'));
-
-                if (!esDocumento)
-                {
-                    TempData[Mensaje] = $"El documento ingresado no es una Cédula o no es legible {textoExtraido}";
-                    return false;
-                }
-
-                modelo.Propietario.DocumentoCedula = await ConvertirArchivoABase64(modelo.Archivo_1);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                TempData[Mensaje] = $"Error al procesar el documento: {ex.Message}";
-                return false;
-            }
-        }
         //Encripta Todo
         public async void Contrasenas(Models.Login login)
         {
@@ -944,11 +912,16 @@ namespace AppTaxi.Controllers
             // Procesa el archivo de cédula
             if (modelo.Archivo_1 != null && modelo.Archivo_1.Length > 0)
             {
-                if (!await ProcesarDocumentoCedula(modelo))
+                if (!ProcesarDocumentoCedula(modelo))
+                {
+                    //TempData[Mensaje] = "El documento no es una cedula o no es legible";
                     return RedirectToAction("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
+                }
+                    
             }
 
             // Procesa los demás archivos
+            modelo.Conductor.DocumentoCedula = await ConvertirArchivoABase64(modelo.Archivo_1);
             modelo.Conductor.DocumentoEps = await ConvertirArchivoABase64(modelo.Archivo_2);
             modelo.Conductor.DocumentoArl = await ConvertirArchivoABase64(modelo.Archivo_3);
             modelo.Conductor.Foto = await ConvertirArchivoABase64(modelo.Archivo_4);
@@ -1106,14 +1079,19 @@ namespace AppTaxi.Controllers
                                      c.Nombre == modelo.Conductor.Nombre))
             {
                 TempData[Mensaje] = "El conductor ya está registrado";
-                return RedirectToAction("Agregar_Conductor");
+                return View("Agregar_Conductor");
             }
 
             // Procesa el archivo de la cédula
-            if (!await ProcesarDocumentoCedula(modelo))
+            if (!ProcesarDocumentoCedula(modelo))
+            {
+                //TempData[Mensaje] = "El documento subido no es una cedula o no es legible";
                 return View("Agregar_Conductor");
+            }
+                
 
             // Procesa los demás archivos
+            modelo.Conductor.DocumentoCedula = await ConvertirArchivoABase64(modelo.Archivo_1);
             modelo.Conductor.DocumentoEps = await ConvertirArchivoABase64(modelo.Archivo_2);
             modelo.Conductor.DocumentoArl = await ConvertirArchivoABase64(modelo.Archivo_3);
             modelo.Conductor.Foto = await ConvertirArchivoABase64(modelo.Archivo_4) ?? "N/F";
@@ -1406,6 +1384,7 @@ namespace AppTaxi.Controllers
                 TempData[Mensaje] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
+
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -1416,96 +1395,64 @@ namespace AppTaxi.Controllers
             var login = CreateLogin(usuario);
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
-
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "Empresa no encontrada";
+                return RedirectToAction("Inicio");
+            }
             ViewBag.Cupos = empresa.Cupos - await Cupos();
+
             var propietarios = await _propietario.Lista(login);
-
-
             modelo.Propietario.Estado = true;
-            modelo.Propietario.IdEmpresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario)?.IdEmpresa ?? 0;
+            modelo.Propietario.IdEmpresa = empresa.IdEmpresa;
 
-            // Valida si el propietario ya está registrado.
-            if (propietarios.Any(c => c.NumeroCedula == modelo.Propietario.NumeroCedula || c.Correo == modelo.Propietario.Correo || c.Nombre == modelo.Propietario.Nombre))
+            // Validar si ya existe el propietario.
+            if (propietarios.Any(c => c.NumeroCedula == modelo.Propietario.NumeroCedula ||
+                                       c.Correo == modelo.Propietario.Correo ||
+                                       c.Nombre == modelo.Propietario.Nombre))
             {
                 TempData[Mensaje] = "El propietario ya está registrado";
                 return RedirectToAction("Agregar_Propietario");
             }
+
+            // Procesar la foto si se subió.
             if (modelo.Archivo_4 != null)
             {
-                using (var ms = new MemoryStream())
-                {
-                    await modelo.Archivo_4.CopyToAsync(ms);
-                    modelo.Propietario.Foto = Convert.ToBase64String(ms.ToArray());
-                }
+                modelo.Propietario.Foto = await ConvertirArchivoABase64(modelo.Archivo_4);
             }
 
-            if (modelo.Archivo_1 != null && modelo.Archivo_1.Length > 0)
+            // Procesar el documento de cédula.
+            if (modelo.Archivo_1 == null || modelo.Archivo_1.Length <= 0)
             {
-                try
-                {
-                    ValidacionDocumentos sistema = new ValidacionDocumentos();
-
-                    // Aplicar OCR al PDF y extraer texto
-                    string textoExtraido = sistema.ProcesarPdfConOCR(modelo.Archivo_1);
-
-                    // Validar si el documento es una cédula
-                    bool esDocumento = sistema.Contiene(textoExtraido.ToUpper(), new string[] { "REPÚBLICA", "COLOMBIA" }, 'Y');
-
-                    if (esDocumento)
-                    {
-                        using (var ms = new MemoryStream())
-                        {
-                            await modelo.Archivo_1.CopyToAsync(ms);
-                            modelo.Propietario.DocumentoCedula = Convert.ToBase64String(ms.ToArray());
-                        }
-                    }
-                    else
-                    {
-                        //TempData[Mensaje] = textoExtraido;
-                        TempData[Mensaje] = $"El documento ingresado no es una Cédula o no es legible";
-                        return View("Agregar_Propietario");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    TempData[Mensaje] = $"Error al procesar el documento: {ex.Message}";
-                    return View("Agregar_Propietario");
-                }
-            }
-            else
-            {
-                TempData[Mensaje] = "No se ha subido ningún archivo.";
+                TempData[Mensaje] = "No se ha subido ningún archivo de Cedula.";
                 return View("Agregar_Propietario");
             }
-            ValidarModelo valida = new ValidarModelo();
-            valida = ValidarModelos.validarPropietario(modelo.Propietario);
-            if (valida.Respuesta)
+            if (!ProcesarDocumentoCedula(modelo))
             {
-                // Guarda el propietario.
-                bool respuesta = await _propietario.Guardar(modelo.Propietario, login);
-
-                if (respuesta)
-                {
-                    var propietariosGuardados = await _propietario.Lista(login);
-                    var propietarioGuardado = propietariosGuardados.FirstOrDefault(p => p.NumeroCedula == modelo.Propietario.NumeroCedula);
-                    ViewBag.IdPropietario = modelo.Propietario?.IdPropietario;
-                    ViewBag.Exito = true;
-                    Transaccion t = Crear_Transaccion("Guardar", "Propietario");
-                    bool guardar = await _transaccion.Guardar(t, login);
-                    return RedirectToAction("Propietarios");
-                }
-                else
-                {
-                    TempData[Mensaje] = "No se pudo Guardar";
-                    return View("Agregar_Propietario");
-                }
+                //TempData[Mensaje] = "El documento no es una cedula o no es legible";
+                return View("Agregar_Propietario");
             }
-            else
+            modelo.Propietario.DocumentoCedula = await ConvertirArchivoABase64(modelo.Archivo_1);
+            // Validar el modelo del propietario.
+            var validacion = ValidarModelos.validarPropietario(modelo.Propietario);
+            if (!validacion.Respuesta)
             {
-                TempData[Mensaje] = valida.Mensaje;
+                TempData[Mensaje] = validacion.Mensaje;
                 return View("Agregar_Propietario");
             }
 
+            // Guardar el propietario.
+            bool respuesta = await _propietario.Guardar(modelo.Propietario, login);
+            if (!respuesta)
+            {
+                TempData[Mensaje] = "No se pudo Guardar";
+                return View("Agregar_Propietario");
+            }
+
+            // Registrar la transacción y redirigir.
+            Transaccion t = Crear_Transaccion("Guardar", "Propietario");
+            await _transaccion.Guardar(t, login);
+            return RedirectToAction("Propietarios");
         }
 
         //------------------------- Horario ----------------------------------------------
