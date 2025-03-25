@@ -87,16 +87,33 @@
 
                     <!-- Propietario -->
                     <div class="col-12">
-                        <div class="form-floating mb-4">
-                            <select class="form-select form-select-lg"
-                                    asp-for="Vehiculo.IdPropietario" required>
-                                <option value="">Seleccione un propietario</option>
-                                @foreach (var propietario in Model.Propietarios)
-                                {
-                                    <option value="@propietario.IdPropietario">@propietario.Nombre</option>
-                                }
-                            </select>
-                            <label>Propietario del Vehículo</label>
+                        <div class="mb-4">
+                            @if (Model.Propietarios.Any())
+                            {
+                                <div class="form-floating">
+                                    <select class="form-select form-select-lg"
+                                            asp-for="Vehiculo.IdPropietario" required>
+                                        <option value="">Seleccione un propietario</option>
+                                        @foreach (var propietario in Model.Propietarios)
+                                        {
+                                            <option value="@propietario.IdPropietario">@propietario.Nombre</option>
+                                        }
+                                    </select>
+                                    <label>Propietario del Vehículo</label>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-3 border rounded-3 bg-light">
+                                    <p class="text-danger fs-5 mb-3 fw-bold">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>No hay propietarios registrados
+                                    </p>
+                                    <a asp-action="Agregar_Propietario" asp-controller="Empresa"
+                                       class="btn btn-success btn-lg px-5">
+                                        <i class="fas fa-user-plus me-2"></i>Agregar Propietario
+                                    </a>
+                                </div>
+                            }
                         </div>
                     </div>
 

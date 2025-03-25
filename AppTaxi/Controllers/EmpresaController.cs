@@ -46,47 +46,36 @@ namespace AppTaxi.Controllers
         //Remover validaciones de modelos:
         private void RemoverValidaciones(ModeloVista modelo)
         {
-            if (modelo.Vehiculo == null)
-                ModelState.Remove(nameof(modelo.Vehiculo));
-            if (modelo.Conductor == null)
-                ModelState.Remove(nameof(modelo.Conductor));
-            if (modelo.Empresa == null)
-                ModelState.Remove(nameof(modelo.Empresa));
-            if (modelo.Propietario == null)
-                ModelState.Remove(nameof(modelo.Propietario));
-            if (modelo.Horario == null)
-                ModelState.Remove(nameof(modelo.Horario));
-            if (modelo.Usuario == null)
-                ModelState.Remove(nameof(modelo.Usuario));
-            if (modelo.Transaccion == null)
-                ModelState.Remove(nameof(modelo.Transaccion));
+            var validaciones = new (object Valor, string Nombre)[]
+            {
+                (modelo.Vehiculo, nameof(modelo.Vehiculo)),
+                (modelo.Conductor, nameof(modelo.Conductor)),
+                (modelo.Empresa, nameof(modelo.Empresa)),
+                (modelo.Propietario, nameof(modelo.Propietario)),
+                (modelo.Horario, nameof(modelo.Horario)),
+                (modelo.Usuario, nameof(modelo.Usuario)),
+                (modelo.Transaccion, nameof(modelo.Transaccion)),
+                (modelo.Contador, nameof(modelo.Contador)),
+                (modelo.Vehiculos, nameof(modelo.Vehiculos)),
+                (modelo.Conductores, nameof(modelo.Conductores)),
+                (modelo.Empresas, nameof(modelo.Empresas)),
+                (modelo.Propietarios, nameof(modelo.Propietarios)),
+                (modelo.Horarios, nameof(modelo.Horarios)),
+                (modelo.Usuarios, nameof(modelo.Usuarios)),
+                (modelo.Transacciones, nameof(modelo.Transacciones)),
+                (modelo.Archivo_1, nameof(modelo.Archivo_1)),
+                (modelo.Archivo_2, nameof(modelo.Archivo_2)),
+                (modelo.Archivo_3, nameof(modelo.Archivo_3)),
+                (modelo.Archivo_4, nameof(modelo.Archivo_4))
+            };
 
-            if (modelo.Contador == null)
-                ModelState.Remove(nameof(modelo.Contador));
-            if (modelo.Vehiculos == null)
-                ModelState.Remove(nameof(modelo.Vehiculos));
-            if (modelo.Conductores == null)
-                ModelState.Remove(nameof(modelo.Conductores));
-            if (modelo.Empresas == null)
-                ModelState.Remove(nameof(modelo.Empresas));
-            if (modelo.Propietarios == null)
-                ModelState.Remove(nameof(modelo.Propietarios));
-            if (modelo.Horarios == null)
-                ModelState.Remove(nameof(modelo.Horarios));
-            if (modelo.Usuarios == null)
-                ModelState.Remove(nameof(modelo.Usuarios));
-            if (modelo.Transacciones == null)
-                ModelState.Remove(nameof(modelo.Transacciones));
-
-            if (modelo.Archivo_1 == null)
-                ModelState.Remove(nameof(modelo.Archivo_1));
-            if (modelo.Archivo_2 == null)
-                ModelState.Remove(nameof(modelo.Archivo_2));
-            if (modelo.Archivo_3 == null)
-                ModelState.Remove(nameof(modelo.Archivo_3));
-            if (modelo.Archivo_4 == null)
-                ModelState.Remove(nameof(modelo.Archivo_4));
+            foreach (var validacion in validaciones)
+            {
+                if (validacion.Valor == null)
+                    ModelState.Remove(validacion.Nombre);
+            }
         }
+
 
         // En tu servicio de usuarios
 
@@ -349,6 +338,11 @@ namespace AppTaxi.Controllers
         // Muestra los detalles de un registro específico (vehículo, conductor, horario, etc.).
         public async Task<IActionResult> Detalle(int IdDato)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -465,6 +459,11 @@ namespace AppTaxi.Controllers
 
         public async Task<IActionResult> Detalle_Vehiculo(int IdVehiculo)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -499,6 +498,11 @@ namespace AppTaxi.Controllers
         // Muestra el formulario para editar un vehículo.
         public async Task<IActionResult> Editar_Vehiculo(int IdVehiculo)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -530,6 +534,7 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Guardar_Vehiculo(ModeloVista modelo)
         {
+
             if (modelo.Vehiculo.IdVehiculo <= 0)
             {
                 TempData["Mensaje"] = "El ID del vehiculo es inválido.";
@@ -837,6 +842,11 @@ namespace AppTaxi.Controllers
         // Muestra los detalles de un conductor específico.
         public async Task<IActionResult> Detalle_Conductor(int IdConductor)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -858,6 +868,11 @@ namespace AppTaxi.Controllers
         // Muestra el formulario para editar un conductor.
         public async Task<IActionResult> Editar_Conductor(int IdConductor)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             Encriptado enc = new Encriptado();
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
@@ -894,6 +909,7 @@ namespace AppTaxi.Controllers
                 TempData["Mensaje"] = "El ID del conductor es inválido.";
                 return BadRequest();
             }
+
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -902,13 +918,22 @@ namespace AppTaxi.Controllers
             }
 
             var login = CreateLogin(usuario);
-            var empresa = (await _empresa.Lista(login))
-                  .FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
-            ViewBag.Cupos = empresa.Cupos - await Cupos();
+
+            // Inicia las tareas en paralelo
+            var empresasTask = _empresa.Lista(login);
+            var usuariosTask = _usuario.Lista(login);
+            var conductorTask = _conductor.Obtener(modelo.Conductor.IdConductor, login);
+            var cuposTask = Cupos();
+
+            // Espera a que todas las tareas finalicen
+            await Task.WhenAll(empresasTask, usuariosTask, conductorTask, cuposTask);
+
+            var empresa = empresasTask.Result.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            ViewBag.Cupos = empresa.Cupos - cuposTask.Result;
             modelo.Conductor.Estado = true;
 
-            var conductor = await _conductor.Obtener(modelo.Conductor.IdConductor, login);
-            var usuarioConductor = (await _usuario.Lista(login))
+            var conductor = conductorTask.Result;
+            var usuarioConductor = usuariosTask.Result
                                    .FirstOrDefault(u => u.Correo == conductor.Correo && u.Contrasena == conductor.Contrasena);
 
             // Procesa el archivo de cédula
@@ -970,10 +995,9 @@ namespace AppTaxi.Controllers
             await _transaccion.Guardar(Crear_Transaccion("Editar", "Conductor"), login);
             await _transaccion.Guardar(Crear_Transaccion("Editar", "Usuario"), login);
 
-            if(contraSinSha!=null)
+            if (!string.IsNullOrEmpty(contraSinSha))
             {
                 TempData["Mensaje"] = $"Editado Correctamente \nCorreo: {usuarioConductor.Correo} \nContraseña: {contraSinSha}";
-
             }
             else
             {
@@ -981,6 +1005,7 @@ namespace AppTaxi.Controllers
             }
             return RedirectToAction("Conductores");
         }
+
 
 
         // Desactiva un conductor (cambia su estado a false).
@@ -1181,6 +1206,11 @@ namespace AppTaxi.Controllers
         // Muestra los detalles de un propietario específico.
         public async Task<IActionResult> Detalle_Propietario(int IdPropietario)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -1210,6 +1240,11 @@ namespace AppTaxi.Controllers
         // Muestra el formulario para editar un propietario.
         public async Task<IActionResult> Editar_Propietario(int IdPropietario)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             ModeloVista modelo = new ModeloVista();
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
@@ -1471,6 +1506,11 @@ namespace AppTaxi.Controllers
         //------------------------- Horario ----------------------------------------------
         public async Task<IActionResult> Ver_Horario_Conductor(int IdConductor)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -1496,6 +1536,11 @@ namespace AppTaxi.Controllers
 
         public async Task<IActionResult> Editar_Horario(int IdHorario)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -2010,6 +2055,11 @@ namespace AppTaxi.Controllers
 
         public async Task<IActionResult> Ver_Horario_Vehiculo(int IdVehiculo)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
@@ -2038,6 +2088,11 @@ namespace AppTaxi.Controllers
 
         public async Task<IActionResult> Crear_Usuario(int IdConductor)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             if (IdConductor <= 0)
             {
                 TempData["Mensaje"] = "El ID es inválido.";

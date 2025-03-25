@@ -40,47 +40,36 @@ namespace AppTaxi.Controllers
         //Remover Validaciones del Modelo: 
         private void RemoverValidaciones(ModeloVista modelo)
         {
-            if (modelo.Vehiculo == null)
-                ModelState.Remove(nameof(modelo.Vehiculo));
-            if (modelo.Conductor == null)
-                ModelState.Remove(nameof(modelo.Conductor));
-            if (modelo.Empresa == null)
-                ModelState.Remove(nameof(modelo.Empresa));
-            if (modelo.Propietario == null)
-                ModelState.Remove(nameof(modelo.Propietario));
-            if (modelo.Horario == null)
-                ModelState.Remove(nameof(modelo.Horario));
-            if (modelo.Usuario == null)
-                ModelState.Remove(nameof(modelo.Usuario));
-            if (modelo.Transaccion == null)
-                ModelState.Remove(nameof(modelo.Transaccion));
+            var validaciones = new (object Valor, string Nombre)[]
+            {
+                (modelo.Vehiculo, nameof(modelo.Vehiculo)),
+                (modelo.Conductor, nameof(modelo.Conductor)),
+                (modelo.Empresa, nameof(modelo.Empresa)),
+                (modelo.Propietario, nameof(modelo.Propietario)),
+                (modelo.Horario, nameof(modelo.Horario)),
+                (modelo.Usuario, nameof(modelo.Usuario)),
+                (modelo.Transaccion, nameof(modelo.Transaccion)),
+                (modelo.Contador, nameof(modelo.Contador)),
+                (modelo.Vehiculos, nameof(modelo.Vehiculos)),
+                (modelo.Conductores, nameof(modelo.Conductores)),
+                (modelo.Empresas, nameof(modelo.Empresas)),
+                (modelo.Propietarios, nameof(modelo.Propietarios)),
+                (modelo.Horarios, nameof(modelo.Horarios)),
+                (modelo.Usuarios, nameof(modelo.Usuarios)),
+                (modelo.Transacciones, nameof(modelo.Transacciones)),
+                (modelo.Archivo_1, nameof(modelo.Archivo_1)),
+                (modelo.Archivo_2, nameof(modelo.Archivo_2)),
+                (modelo.Archivo_3, nameof(modelo.Archivo_3)),
+                (modelo.Archivo_4, nameof(modelo.Archivo_4))
+            };
 
-            if (modelo.Contador == null)
-                ModelState.Remove(nameof(modelo.Contador));
-            if (modelo.Vehiculos == null)
-                ModelState.Remove(nameof(modelo.Vehiculos));
-            if (modelo.Conductores == null)
-                ModelState.Remove(nameof(modelo.Conductores));
-            if (modelo.Empresas == null)
-                ModelState.Remove(nameof(modelo.Empresas));
-            if (modelo.Propietarios == null)
-                ModelState.Remove(nameof(modelo.Propietarios));
-            if (modelo.Horarios == null)
-                ModelState.Remove(nameof(modelo.Horarios));
-            if (modelo.Usuarios == null)
-                ModelState.Remove(nameof(modelo.Usuarios));
-            if (modelo.Transacciones == null)
-                ModelState.Remove(nameof(modelo.Transacciones));
-
-            if (modelo.Archivo_1 == null)
-                ModelState.Remove(nameof(modelo.Archivo_1));
-            if (modelo.Archivo_2 == null)
-                ModelState.Remove(nameof(modelo.Archivo_2));
-            if (modelo.Archivo_3 == null)
-                ModelState.Remove(nameof(modelo.Archivo_3));
-            if (modelo.Archivo_4 == null)
-                ModelState.Remove(nameof(modelo.Archivo_4));
+            foreach (var validacion in validaciones)
+            {
+                if (validacion.Valor == null)
+                    ModelState.Remove(validacion.Nombre);
+            }
         }
+
         // Obtiene el usuario actual desde la sesión.
         private Usuario GetUsuarioFromSession()
         {
@@ -210,6 +199,11 @@ namespace AppTaxi.Controllers
 
         public async Task<IActionResult> Crear_Horario(int IdConductor)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Mensaje"] = "Error con el modelo";
+                return RedirectToAction("Inicio");
+            }
             var usuario = GetUsuarioFromSession();
             if (usuario == null)
             {
