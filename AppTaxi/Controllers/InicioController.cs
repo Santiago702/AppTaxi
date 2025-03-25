@@ -76,82 +76,75 @@ namespace AppTaxi.Controllers
                 TempData["Mensaje"] = "Error con el modelo";
                 return RedirectToAction("Inicio");
             }
-            string contrasena = Encriptado.GetSHA256(login.Contrasena);
-            login.Contrasena = contrasena;
-            List<Usuario> lista = new List<Usuario>();
-            Usuario usuario = new Usuario();
-            ViewBag.Mensaje = "";
+
+            // Validación de campos obligatorios
             if (string.IsNullOrEmpty(login.Correo) || string.IsNullOrEmpty(login.Contrasena))
             {
                 ViewBag.Mensaje = "Se debe digitar los campos solicitados";
                 return View("Login");
             }
 
-            if(!ValidacionDato.ValidarTexto(login.Correo) || !ValidacionDato.ValidarTexto(login.Contrasena))
+            // Validación de caracteres permitidos
+            if (!ValidacionDato.ValidarTexto(login.Correo) || !ValidacionDato.ValidarTexto(login.Contrasena))
             {
                 ViewBag.Mensaje = "Error, intenta ingresar caracteres no permitidos";
                 return View("Login");
             }
-            
-            lista = await _usuario.Lista(login);
 
-            if (lista != null && lista.Any())
+            // Encriptar la contraseña
+            login.Contrasena = Encriptado.GetSHA256(login.Contrasena);
+
+            // Obtener usuarios
+            List<Usuario> lista = await _usuario.Lista(login);
+            if (lista == null || !lista.Any())
             {
-
-                
-                
-                usuario = lista.Where(item => item.Correo == login.Correo && item.Contrasena == login.Contrasena).FirstOrDefault();
-                if (usuario.Estado == true)
-                {
-                    
-                    switch (usuario.IdRol)
-                    {
-                        case 1:
-                            var empresas = await _empresa.Lista(login);
-                            var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
-                            if (empresa != null)
-                            {
-                                
-                                ViewBag.Mensaje = $"Bienvenido {usuario.Nombre}";
-                                HttpContext.Session.SetString("Usuario", JsonConvert.SerializeObject(usuario));
-                                return RedirectToAction("Inicio", "Empresa");
-                            }
-                            else
-                            {
-                                ViewBag.Mensaje = "¡Error! No tienes empresa Asignada";
-                                return View("Login");
-                            }
-                            
-                        case 2:
-                            ViewBag.Mensaje = $"Bienvenido {usuario.Nombre}";
-                            HttpContext.Session.SetString("Usuario", JsonConvert.SerializeObject(usuario));
-                            return RedirectToAction("Inicio", "Secretaria");
-                        
-                        case 1006:
-                            ViewBag.Mensaje = $"Bienvenido {usuario.Nombre}";
-                            HttpContext.Session.SetString("Usuario", JsonConvert.SerializeObject(usuario));
-                            return RedirectToAction("Inicio", "Conductor");
-                        default:
-                            return View("Login");
-                    }
-                }
-                else
-                {
-
-                    ViewBag.Mensaje = "¡Error! Usuario Deshabilitado";
-                    return View("Login");
-
-                }
-                
-            }
-            else
-            {
-                string msg = "Usuario o Contraseña incorrecta";
-                ViewBag.Mensaje = msg;
+                ViewBag.Mensaje = "Usuario o Contraseña incorrecta";
                 return View("Login");
             }
-  
+
+            Usuario usuario = lista.FirstOrDefault(item => item.Correo == login.Correo && item.Contrasena == login.Contrasena);
+            if (usuario == null)
+            {
+                ViewBag.Mensaje = "Usuario o Contraseña incorrecta";
+                return View("Login");
+            }
+
+            if (!usuario.Estado)
+            {
+                ViewBag.Mensaje = "¡Error! Usuario Deshabilitado";
+                return View("Login");
+            }
+
+            // Según el rol, validar existencia de empresa u otras redirecciones
+            switch (usuario.IdRol)
+            {
+                case 1:
+                    var empresas = await _empresa.Lista(login);
+                    var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+                    if (empresa == null)
+                    {
+                        ViewBag.Mensaje = "¡Error! No tienes empresa Asignada";
+                        return View("Login");
+                    }
+                    ViewBag.Mensaje = $"Bienvenido {usuario.Nombre}";
+                    HttpContext.Session.SetString("Usuario", JsonConvert.SerializeObject(usuario));
+                    return RedirectToAction("Inicio", "Empresa");
+
+                case 2:
+                    ViewBag.Mensaje = $"Bienvenido {usuario.Nombre}";
+                    HttpContext.Session.SetString("Usuario", JsonConvert.SerializeObject(usuario));
+                    return RedirectToAction("Inicio", "Secretaria");
+
+                case 1006:
+                    ViewBag.Mensaje = $"Bienvenido {usuario.Nombre}";
+                    HttpContext.Session.SetString("Usuario", JsonConvert.SerializeObject(usuario));
+                    return RedirectToAction("Inicio", "Conductor");
+
+                default:
+                    return View("Login");
+            }
         }
+
 
         public IActionResult CerrarSesion()
         {

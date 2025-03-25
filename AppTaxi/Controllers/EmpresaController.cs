@@ -1952,57 +1952,37 @@ namespace AppTaxi.Controllers
                 TempData[Mensaje] = UsuarioNoAutenticado;
                 return RedirectToAction("Login", "Inicio");
             }
-
             var login = CreateLogin(usuario);
-
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
-
             ViewBag.Cupos = empresa.Cupos - await Cupos();
 
             var conductoresTotales = await _conductor.Lista(login);
             var vehiculosTotales = await _vehiculo.Lista(login);
 
-            ModeloVista modelo = new ModeloVista();
-            modelo.Conductores = conductoresTotales.Where(i => i.IdEmpresa == empresa.IdEmpresa && i.Estado).ToList();
-            modelo.Vehiculos = vehiculosTotales.Where(i => i.IdEmpresa == empresa.IdEmpresa && i.Estado).ToList();
-            if (modelo.Conductores.Count() > 0)
+            ModeloVista modelo = new ModeloVista
             {
-
-                int i = 0;
-                while (true)
-                {
-                    modelo.Conductores[i].Contador = i + 1;
-                    if (i == modelo.Conductores.Count() - 1)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        i++;
-                    }
-                }
+                Conductores = conductoresTotales.Where(i => i.IdEmpresa == empresa.IdEmpresa && i.Estado).ToList(),
+                Vehiculos = vehiculosTotales.Where(i => i.IdEmpresa == empresa.IdEmpresa && i.Estado).ToList()
+            };
+            if(modelo.Conductores.Count() <= 0 && modelo.Vehiculos.Count() <= 0)
+            {
+                TempData[Mensaje] = "Las listas están vacías";
+                return RedirectToAction("Inicio");
+            }
+            for (int i = 0; i < modelo.Conductores.Count; i++)
+            {
+                modelo.Conductores[i].Contador = i + 1;
             }
 
-            if (modelo.Vehiculos.Count() > 0)
+            for (int i = 0; i < modelo.Vehiculos.Count; i++)
             {
-
-                int i = 0;
-                while (true)
-                {
-                    modelo.Vehiculos[i].Contador = i + 1;
-                    if (i == modelo.Vehiculos.Count() - 1)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        i++;
-                    }
-                }
+                modelo.Vehiculos[i].Contador = i + 1;
             }
+
             return View(modelo);
         }
+
 
 
         public async Task<IActionResult> Ver_Horario_Vehiculo(int IdVehiculo)

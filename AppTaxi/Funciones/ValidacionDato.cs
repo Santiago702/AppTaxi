@@ -10,7 +10,7 @@
             }
                 
             // Lista de símbolos no permitidos
-            char[] simbolosNoPermitidos = { ';', '*', '=', '$', '&', '|',',','+','"','?','¿','!','(',')','%' };
+            char[] simbolosNoPermitidos = { ';', '*', '=', '$', '&', '|','+','"','?','¿','!','(',')','%' };
 
             // Verificar si el texto contiene alguno de los símbolos no permitidos
             return !texto.Any(c => simbolosNoPermitidos.Contains(c));
