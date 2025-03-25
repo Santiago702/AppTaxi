@@ -197,6 +197,13 @@ namespace AppTaxi.Controllers
 
             var conductores = await _conductor.Lista(login);
             var conductor = conductores.FirstOrDefault(c => c.Correo == usuario.Correo && c.Contrasena == usuario.Contrasena);
+
+            if (conductor == null)
+            {
+                TempData[Mensaje] = "Conductor no encontrado.";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             var empresa = await _empresa.Obtener(conductor.IdEmpresa, login);
             var vehiculos = await _vehiculo.Lista(login);
             var horarios = await _horario.Lista(login);

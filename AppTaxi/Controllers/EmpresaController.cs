@@ -344,7 +344,12 @@ namespace AppTaxi.Controllers
                 .Where(e => e.IdUsuario == usuario.IdUsuario)
                 .Select(e => e.IdEmpresa)
                 .FirstOrDefault();
-
+            if (IdEmpresa == 0)
+            {
+                TempData[Mensaje] = "Conductor no encontrado.";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             // Convertimos las listas en diccionarios para acceso rápido
             var vehiculosDict = vehiculosTotales.ToDictionary(v => v.IdVehiculo);
             var conductoresDict = conductoresTotales.ToDictionary(c => c.IdConductor);
@@ -461,6 +466,12 @@ namespace AppTaxi.Controllers
             var cuposValue = cuposTask.Result;
 
             var empresa = empresasTot.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "Empresa no encontrada";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             ViewBag.Cupos = empresa.Cupos - cuposValue;
 
             return View(vehiculo);
@@ -497,6 +508,12 @@ namespace AppTaxi.Controllers
             int cuposValue = cuposTask.Result;
 
             var empresa = empresasTot.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "Empresa no encontrada.";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             ViewBag.Cupos = empresa?.Cupos - cuposValue;
 
             ModeloVista modelo = new ModeloVista { Vehiculo = vehiculo };
@@ -535,6 +552,12 @@ namespace AppTaxi.Controllers
 
             var empresas = empresasTask.Result;
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "Empresa no encontrada.";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             ViewBag.Cupos = empresa?.Cupos - cuposTask.Result;
 
             // Asegurarse de que el vehículo se marque como activo.
@@ -608,6 +631,13 @@ namespace AppTaxi.Controllers
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
 
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la Empresa.";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
+
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             var vehiculo = await _vehiculo.Obtener(IdVehiculo, login);
             vehiculo.Estado = false;
@@ -642,7 +672,12 @@ namespace AppTaxi.Controllers
             // Obtiene las empresas y propietarios asociados al usuario.
             var empresas = await _empresa.Lista(login);
             var IdEmpresa = empresas.FirstOrDefault(item => item.IdUsuario == usuario.IdUsuario)?.IdEmpresa;
-
+            if (IdEmpresa == 0)
+            {
+                TempData[Mensaje] = "ID de empresa en 0";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             var propietariosTotales = await _propietario.Lista(login);
             var propietariosEmpresa = propietariosTotales?.Where(p => p.IdEmpresa == IdEmpresa && p.Estado).ToList();
 
@@ -683,6 +718,12 @@ namespace AppTaxi.Controllers
 
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No hay ninguna empresa.";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             if (empresa.Cupos - await Cupos() <= 0)
@@ -784,6 +825,12 @@ namespace AppTaxi.Controllers
             var empresas = await _empresa.Lista(login);
             var IdEmpresa = empresas.FirstOrDefault(item => item.IdUsuario == usuario.IdUsuario)?.IdEmpresa;
 
+            if (IdEmpresa == 0)
+            {
+                TempData[Mensaje] = "Empresa no Encontrada";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             var conductoresTotales = await _conductor.Lista(login);
             var conductoresEmpresa = conductoresTotales?.Where(c => c.IdEmpresa == IdEmpresa && c.Estado).ToList();
             if (conductoresEmpresa.Count > 0)
@@ -834,6 +881,12 @@ namespace AppTaxi.Controllers
             List<Empresa> empresasTot = await _empresa.Lista(login);
 
             var empresa = empresasTot.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault();
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             return View(conductor);
         }
@@ -864,6 +917,12 @@ namespace AppTaxi.Controllers
             List<Empresa> empresasTot = await _empresa.Lista(login);
 
             var empresa = empresasTot.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault();
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             ViewBag.Cupos = empresa.Cupos - await Cupos();
 
             return View(modelo);
@@ -902,6 +961,12 @@ namespace AppTaxi.Controllers
             await Task.WhenAll(empresasTask, usuariosTask, conductorTask, cuposTask);
 
             var empresa = empresasTask.Result.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             ViewBag.Cupos = empresa.Cupos - cuposTask.Result;
             modelo.Conductor.Estado = true;
 
@@ -1010,6 +1075,12 @@ namespace AppTaxi.Controllers
             var login = CreateLogin(usuario);
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             var conductor = await _conductor.Obtener(IdConductor, login);
@@ -1046,6 +1117,12 @@ namespace AppTaxi.Controllers
             List<Empresa> empresasTot = await _empresa.Lista(login);
 
             var empresa = empresasTot.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault();
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             return View();
         }
@@ -1068,6 +1145,12 @@ namespace AppTaxi.Controllers
 
             var login = CreateLogin(usuario);
             var empresa = (await _empresa.Lista(login)).FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             ViewBag.Cupos = empresa.Cupos - await Cupos();
 
             modelo.Conductor.Estado = true;
@@ -1159,7 +1242,12 @@ namespace AppTaxi.Controllers
             // Obtiene las empresas y propietarios asociados al usuario.
             var empresas = await _empresa.Lista(login);
             var IdEmpresa = empresas.FirstOrDefault(item => item.IdUsuario == usuario.IdUsuario)?.IdEmpresa;
-
+            if (IdEmpresa == 0)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             var propietariosTotales = await _propietario.Lista(login);
             var propietariosEmpresa = propietariosTotales?.Where(p => p.IdEmpresa == IdEmpresa && p.Estado).ToList();
 
@@ -1212,6 +1300,12 @@ namespace AppTaxi.Controllers
             List<Empresa> empresasTot = await _empresa.Lista(login);
 
             var empresa = empresasTot.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault();
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             ViewBag.Cupos = empresa.Cupos - await Cupos();
 
             //var ocrService = new ValidacionDocumentos();
@@ -1243,6 +1337,12 @@ namespace AppTaxi.Controllers
             List<Empresa> empresasTot = await _empresa.Lista(login);
 
             var empresa = empresasTot.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault();
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             ViewBag.Cupos = empresa.Cupos - await Cupos();
 
             return View(modelo);
@@ -1273,6 +1373,12 @@ namespace AppTaxi.Controllers
             var login = CreateLogin(usuario);
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             modelo.Propietario.Estado = true;
@@ -1335,6 +1441,12 @@ namespace AppTaxi.Controllers
             var login = CreateLogin(usuario);
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             var propietario = await _propietario.Obtener(IdPropietario, login);
@@ -1370,6 +1482,12 @@ namespace AppTaxi.Controllers
             List<Empresa> empresasTot = await _empresa.Lista(login);
 
             var empresa = empresasTot.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault();
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             return View();
         }
@@ -1395,6 +1513,7 @@ namespace AppTaxi.Controllers
             var login = CreateLogin(usuario);
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+
             if (empresa == null)
             {
                 TempData[Mensaje] = "Empresa no encontrada";
@@ -1481,6 +1600,12 @@ namespace AppTaxi.Controllers
             List<Empresa> empresasTot = await _empresa.Lista(login);
 
             var empresa = empresasTot.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault();
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             ViewBag.Cupos = empresa.Cupos - await Cupos();
 
             return View(modelo);
@@ -1506,6 +1631,12 @@ namespace AppTaxi.Controllers
             var conductores = await _conductor.Lista(login);
             var empresas = await _empresa.Lista(login);
             int IdEmpresa = empresas.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault().IdEmpresa;
+            if (IdEmpresa == 0)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             modelo.Vehiculos = vehiculos?.Where(v => v.IdEmpresa == IdEmpresa && v.Estado).ToList();
             modelo.Conductores = conductores?.Where(c => c.IdEmpresa == IdEmpresa && c.Estado).ToList();
@@ -1547,6 +1678,12 @@ namespace AppTaxi.Controllers
 
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             Horario h = modelo.Horario;
@@ -1592,6 +1729,12 @@ namespace AppTaxi.Controllers
 
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             var horario = await _horario.Obtener(IdHorario, login);
@@ -1627,6 +1770,12 @@ namespace AppTaxi.Controllers
             var empresas = await _empresa.Lista(login);
             var conductores = await _conductor.Lista(login);
             int IdEmpresa = empresas.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault().IdEmpresa;
+            if (IdEmpresa == 0)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             modelo.Vehiculos = vehiculos?.Where(v => v.IdEmpresa == IdEmpresa && v.Estado).ToList();
 
@@ -1664,10 +1813,15 @@ namespace AppTaxi.Controllers
 
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             ViewBag.Cupos = empresa.Cupos - await Cupos();
-            // Asignar el IdConductor al horario
-            //modelo.Horario.IdConductor = modelo.Conductor.IdConductor;
+            
 
             List<Horario> horarios = await _horario.Lista(login);
 
@@ -1736,6 +1890,12 @@ namespace AppTaxi.Controllers
 
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             ViewBag.Cupos = empresa.Cupos - await Cupos();
 
@@ -1817,6 +1977,12 @@ namespace AppTaxi.Controllers
 
             int IdEmpresa = modeloTotal.Empresas.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault().IdEmpresa;
 
+            if (IdEmpresa == 0)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             ModeloVista modelo = new ModeloVista();
             modelo.Conductores = modeloTotal.Conductores.Where(item => item.Estado == false && item.IdEmpresa == IdEmpresa).ToList();
@@ -1848,6 +2014,13 @@ namespace AppTaxi.Controllers
             var login = CreateLogin(usuario);
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             var conductor = await _conductor.Obtener(IdConductor, login);
@@ -1886,6 +2059,12 @@ namespace AppTaxi.Controllers
             var login = CreateLogin(usuario);
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             var vehiculo = await _vehiculo.Obtener(IdVehiculo, login);
@@ -1924,6 +2103,12 @@ namespace AppTaxi.Controllers
             var login = CreateLogin(usuario);
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             ViewBag.Cupos = empresa.Cupos - await Cupos();
             var propietario = await _propietario.Obtener(IdPropietario, login);
@@ -1955,6 +2140,12 @@ namespace AppTaxi.Controllers
             var login = CreateLogin(usuario);
             var empresas = await _empresa.Lista(login);
             var empresa = empresas.FirstOrDefault(e => e.IdUsuario == usuario.IdUsuario);
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             ViewBag.Cupos = empresa.Cupos - await Cupos();
 
             var conductoresTotales = await _conductor.Lista(login);
@@ -2011,6 +2202,12 @@ namespace AppTaxi.Controllers
             List<Empresa> empresasTot = await _empresa.Lista(login);
 
             var empresa = empresasTot.Where(e => e.IdUsuario == usuario.IdUsuario).FirstOrDefault();
+            if (empresa == null)
+            {
+                TempData[Mensaje] = "No se encontró la empresa";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
 
             modelo.Conductores = conductoresTotales.Where(c => c.IdEmpresa == empresa.IdEmpresa).ToList();
             ViewBag.Cupos = empresa.Cupos - await Cupos();
