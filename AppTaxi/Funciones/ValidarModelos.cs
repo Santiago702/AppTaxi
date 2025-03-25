@@ -54,6 +54,26 @@ namespace AppTaxi.Funciones
                 vm.Respuesta = true;
                 vm.Mensaje = "Correcto";
             }
+            if(v.VenceSoat.Date <  DateTime.Now.Date)
+            {
+                vm.Mensaje = "El SOAT debe estar actualizado";
+                vm.Respuesta = false;
+            }
+            else
+            {
+                vm.Respuesta = true;
+                vm.Mensaje = "Correcto";
+            }
+            if (v.VenceTecnicoMecanica.Date < DateTime.Now.Date)
+            {
+                vm.Mensaje = "El registro Técnico debe estar actualizado";
+                vm.Respuesta = false;
+            }
+            else
+            {
+                vm.Respuesta = true;
+                vm.Mensaje = "Correcto";
+            }
             return vm;
         }
 
