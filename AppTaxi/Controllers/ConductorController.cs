@@ -134,15 +134,22 @@ namespace AppTaxi.Controllers
             }
 
             var login = CreateLogin(usuario);
-
             var conductores = await _conductor.Lista(login);
             var conductor = conductores.FirstOrDefault(c => c.Correo == usuario.Correo && c.Contrasena == usuario.Contrasena);
+
+            
+
             var empresa = await _empresa.Obtener(conductor.IdEmpresa, login);
-            ModeloVista modelo = new ModeloVista();
-            modelo.Conductor = conductor;
-            modelo.Empresa = empresa;
+
+            ModeloVista modelo = new ModeloVista
+            {
+                Conductor = conductor,
+                Empresa = empresa
+            };
+
             return View(modelo);
         }
+
 
         public async Task<IActionResult> Horarios()
         {
@@ -160,6 +167,12 @@ namespace AppTaxi.Controllers
             var conductores = await _conductor.Lista(login);
             var conductor = conductores.FirstOrDefault(c => c.Correo == usuario.Correo && c.Contrasena == usuario.Contrasena);
 
+            if (conductor == null)
+            {
+                TempData[Mensaje] = "Conductor no encontrado.";
+                // Podrías redirigir a una acción específica o mostrar una vista de error
+                return RedirectToAction("Inicio");
+            }
             var vehiculos = await _vehiculo.Lista(login);
             var horarios = await _horario.Lista(login);
             modelo.Horarios = horarios.Where(h => h.IdConductor == conductor.IdConductor).ToList();
@@ -249,7 +262,7 @@ namespace AppTaxi.Controllers
             // Obtener datos necesarios
             var horariosTotales = await _horario.Lista(login);
             var conductoresTotales = await _conductor.Lista(login);
-            var vehiculosTotales = await _vehiculo.Lista(login);
+            //var vehiculosTotales = await _vehiculo.Lista(login);
 
             var conductor = conductoresTotales.FirstOrDefault(c => c.Correo == usuario.Correo && c.Contrasena == usuario.Contrasena);
 
