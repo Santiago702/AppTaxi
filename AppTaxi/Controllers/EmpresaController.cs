@@ -128,7 +128,7 @@ namespace AppTaxi.Controllers
                     return false;
                 }
 
-                //modelo.Conductor.DocumentoCedula = await ConvertirArchivoABase64(modelo.Archivo_1);
+                
                 return true;
             }
             catch (Exception ex)
@@ -151,7 +151,7 @@ namespace AppTaxi.Controllers
 
             if (listaUsuarios == null || !listaUsuarios.Any())
             {
-                //return Content("No se encontraron usuarios para actualizar.");
+                
             }
 
             int actualizados = 0;
@@ -177,7 +177,7 @@ namespace AppTaxi.Controllers
                 }
             }
 
-            //return Content($"Proceso completado. Se han actualizado {actualizados} contraseñas.");
+            
         }
 
 
@@ -729,9 +729,7 @@ namespace AppTaxi.Controllers
             if (empresa.Cupos - await Cupos() <= 0)
             {
                 TempData[Mensaje] = "No se puede agregar, No hay Cupos";
-                //var propietariosTotales = await _propietario.Lista(login);
-                //viewModel.Propietarios = propietariosTotales?.Where(p => p.IdEmpresa == viewModel.Vehiculo.IdEmpresa && p.Estado).ToList();
-
+                
                 return View("Agregar_Vehiculo", viewModel);
             }
             var vehiculos = await _vehiculo.Lista(login);
@@ -909,8 +907,6 @@ namespace AppTaxi.Controllers
             ModeloVista modelo = new ModeloVista();
             var login = CreateLogin(usuario);
             var conductor = await _conductor.Obtener(IdConductor, login);
-            //string Contrasena = enc.DesencriptarSimple(conductor.Contrasena);
-            //conductor.Contrasena = Contrasena;
 
             modelo.Conductor = conductor;
 
@@ -979,7 +975,6 @@ namespace AppTaxi.Controllers
             {
                 if (!ProcesarDocumentoCedula(modelo))
                 {
-                    //TempData[Mensaje] = "El documento no es una cedula o no es legible";
                     return RedirectToAction("Editar_Conductor", new { IdConductor = modelo.Conductor.IdConductor });
                 }
                     
@@ -1168,7 +1163,6 @@ namespace AppTaxi.Controllers
             // Procesa el archivo de la cédula
             if (!ProcesarDocumentoCedula(modelo))
             {
-                //TempData[Mensaje] = "El documento subido no es una cedula o no es legible";
                 return View("Agregar_Conductor");
             }
                 
@@ -1308,9 +1302,6 @@ namespace AppTaxi.Controllers
             }
             ViewBag.Cupos = empresa.Cupos - await Cupos();
 
-            //var ocrService = new ValidacionDocumentos();
-            //string texto = ocrService.ProcesarImagenConOCR("wwwroot/temp/Cedula3.png");
-            //TempData[Mensaje] = texto;
             return View(modelo);
         }
 
@@ -1548,7 +1539,6 @@ namespace AppTaxi.Controllers
             }
             if (!ProcesarDocumentoCedula(modelo))
             {
-                //TempData[Mensaje] = "El documento no es una cedula o no es legible";
                 return View("Agregar_Propietario");
             }
             modelo.Propietario.DocumentoCedula = await ConvertirArchivoABase64(modelo.Archivo_1);
