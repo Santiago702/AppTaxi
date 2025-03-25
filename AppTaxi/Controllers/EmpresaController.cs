@@ -174,6 +174,10 @@ namespace AppTaxi.Controllers
         //Encripta Todo
         public async void Contrasenas(Models.Login login)
         {
+            if(ModelState.IsValid)
+            {
+                TempData[Mensaje] = "No se envió un login Válido";
+            }
             // Obtener la lista completa de usuarios
             List<Usuario> listaUsuarios = await _usuario.Lista(login);
 

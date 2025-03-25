@@ -6,93 +6,98 @@ namespace AppTaxi.Servicios
 {
     public class API_Horario : Autenticacion, I_Horario
     {
+        private const string ListaHorario = "api/Horario/Lista";
+        private const string ObtenerHorario = "api/Horario/Obtener/";
+        private const string GuardarHorario = "api/Horario/Guardar/";
+        private const string EditarHorario = "api/Horario/Editar/";
+        private const string EliminarHorario = "api/Horario/Eliminar/";
 
         public async Task<List<Horario>> Lista(Login login)
         {
             List<Horario> lista = new List<Horario>();
             await Autenticar(login);
 
-            var response = await _httpClient.GetAsync("api/Horario/Lista");
+            var response = await _httpClient.GetAsync(ListaHorario);
 
             if (response.IsSuccessStatusCode)
             {
-                var json_respuesta = await response.Content.ReadAsStringAsync();
-                var resultado = JsonConvert.DeserializeObject<ResultadoApi<List<Horario>>>(json_respuesta);
+                var jsonRespuesta = await response.Content.ReadAsStringAsync();
+                var resultado = JsonConvert.DeserializeObject<ResultadoApi<List<Horario>>>(jsonRespuesta);
                 lista = resultado.Response;
-
             }
             return lista;
-
         }
 
         public async Task<Horario> Obtener(int IdHorario, Login login)
         {
+            if (IdHorario <= 0)
+            {
+                throw new ArgumentException("El ID del horario debe ser mayor que 0.", nameof(IdHorario));
+            }
+
             Horario horario = new Horario();
             await Autenticar(login);
 
-            var response = await _httpClient.GetAsync($"api/Horario/Obtener/{IdHorario}");
+            string ruta = ObtenerHorario + IdHorario.ToString();
+            var response = await _httpClient.GetAsync(ruta);
 
             if (response.IsSuccessStatusCode)
             {
-                var json_respuesta = await response.Content.ReadAsStringAsync();
-                var resultado = JsonConvert.DeserializeObject<ResultadoApi<Horario>>(json_respuesta);
+                var jsonRespuesta = await response.Content.ReadAsStringAsync();
+                var resultado = JsonConvert.DeserializeObject<ResultadoApi<Horario>>(jsonRespuesta);
                 horario = resultado.Response;
-
             }
             return horario;
         }
 
         public async Task<bool> Guardar(Horario horario, Login login)
         {
-            bool Respuesta = false;
+            bool respuesta = false;
             await Autenticar(login);
 
             var contenido = new StringContent(JsonConvert.SerializeObject(horario), Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.PostAsync("api/Horario/Guardar/", contenido);
+            var response = await _httpClient.PostAsync(GuardarHorario, contenido);
 
             if (response.IsSuccessStatusCode)
             {
-                Respuesta = true;
-
+                respuesta = true;
             }
-            return Respuesta;
+            return respuesta;
         }
 
         public async Task<bool> Editar(Horario horario, Login login)
         {
-            bool Respuesta = false;
+            bool respuesta = false;
             await Autenticar(login);
 
             var contenido = new StringContent(JsonConvert.SerializeObject(horario), Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.PutAsync("api/Horario/Editar/", contenido);
+            var response = await _httpClient.PutAsync(EditarHorario, contenido);
 
             if (response.IsSuccessStatusCode)
             {
-                Respuesta = true;
-
+                respuesta = true;
             }
-            return Respuesta;
+            return respuesta;
         }
 
         public async Task<bool> Eliminar(int IdHorario, Login login)
         {
-            bool Respuesta = false;
+            if (IdHorario <= 0)
+            {
+                throw new ArgumentException("El ID del horario debe ser mayor que 0.", nameof(IdHorario));
+            }
+
+            bool respuesta = false;
             await Autenticar(login);
 
-            var response = await _httpClient.DeleteAsync($"api/Horario/Eliminar/{IdHorario}");
+            string ruta = EliminarHorario + IdHorario.ToString();
+            var response = await _httpClient.DeleteAsync(ruta);
 
             if (response.IsSuccessStatusCode)
             {
-                Respuesta = true;
-
+                respuesta = true;
             }
-            return Respuesta;
+            return respuesta;
         }
-
-
-
-
     }
 }

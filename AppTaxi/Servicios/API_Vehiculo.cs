@@ -6,97 +6,98 @@ namespace AppTaxi.Servicios
 {
     public class API_Vehiculo : Autenticacion, I_Vehiculo
     {
+        private const string ListaVehiculo = "api/Vehiculo/Lista";
+        private const string ObtenerVehiculo = "api/Vehiculo/Obtener/";
+        private const string GuardarVehiculo = "api/Vehiculo/Guardar/";
+        private const string EditarVehiculo = "api/Vehiculo/Editar/";
+        private const string EliminarVehiculo = "api/Vehiculo/Eliminar/";
 
         public async Task<List<Vehiculo>> Lista(Login login)
         {
             List<Vehiculo> lista = new List<Vehiculo>();
             await Autenticar(login);
 
-            var response = await _httpClient.GetAsync("api/Vehiculo/Lista");
+            var response = await _httpClient.GetAsync(ListaVehiculo);
 
             if (response.IsSuccessStatusCode)
             {
-                var json_respuesta = await response.Content.ReadAsStringAsync();
-                var resultado = JsonConvert.DeserializeObject<ResultadoApi<List<Vehiculo>>>(json_respuesta);
+                var jsonRespuesta = await response.Content.ReadAsStringAsync();
+                var resultado = JsonConvert.DeserializeObject<ResultadoApi<List<Vehiculo>>>(jsonRespuesta);
                 lista = resultado.Response;
-
             }
             return lista;
-
         }
 
         public async Task<Vehiculo> Obtener(int IdVehiculo, Login login)
         {
+            if (IdVehiculo <= 0)
+            {
+                throw new ArgumentException("El ID del vehículo debe ser mayor que 0.", nameof(IdVehiculo));
+            }
+
             Vehiculo vehiculo = new Vehiculo();
             await Autenticar(login);
 
-            var response = await _httpClient.GetAsync($"api/Vehiculo/Obtener/{IdVehiculo}");
+            string ruta = ObtenerVehiculo + IdVehiculo.ToString();
+            var response = await _httpClient.GetAsync(ruta);
 
             if (response.IsSuccessStatusCode)
             {
-                var json_respuesta = await response.Content.ReadAsStringAsync();
-                var resultado = JsonConvert.DeserializeObject<ResultadoApi<Vehiculo>>(json_respuesta);
+                var jsonRespuesta = await response.Content.ReadAsStringAsync();
+                var resultado = JsonConvert.DeserializeObject<ResultadoApi<Vehiculo>>(jsonRespuesta);
                 vehiculo = resultado.Response;
-
             }
             return vehiculo;
         }
 
-        //public async Task<string> Guardar(Vehiculo vehiculo, Login login)
         public async Task<bool> Guardar(Vehiculo vehiculo, Login login)
         {
-            bool Respuesta = false;
+            bool respuesta = false;
             await Autenticar(login);
 
             var contenido = new StringContent(JsonConvert.SerializeObject(vehiculo), Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.PostAsync("api/Vehiculo/Guardar/", contenido);
+            var response = await _httpClient.PostAsync(GuardarVehiculo, contenido);
 
             if (response.IsSuccessStatusCode)
             {
-                Respuesta = true;
-
+                respuesta = true;
             }
-            return Respuesta;
-            //return response.ToString();
+            return respuesta;
         }
 
         public async Task<bool> Editar(Vehiculo vehiculo, Login login)
-        //public async Task<string> Editar(Vehiculo vehiculo, Login login)
         {
-            bool Respuesta = false;
+            bool respuesta = false;
             await Autenticar(login);
 
             var contenido = new StringContent(JsonConvert.SerializeObject(vehiculo), Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.PutAsync("api/Vehiculo/Editar/", contenido);
+            var response = await _httpClient.PutAsync(EditarVehiculo, contenido);
 
             if (response.IsSuccessStatusCode)
             {
-                Respuesta = true;
-
+                respuesta = true;
             }
-            return Respuesta;
-            //return response.ToString();
+            return respuesta;
         }
 
         public async Task<bool> Eliminar(int IdVehiculo, Login login)
         {
-            bool Respuesta = false;
+            if (IdVehiculo <= 0)
+            {
+                throw new ArgumentException("El ID del vehículo debe ser mayor que 0.", nameof(IdVehiculo));
+            }
+
+            bool respuesta = false;
             await Autenticar(login);
 
-            var response = await _httpClient.DeleteAsync($"api/Vehiculo/Eliminar/{IdVehiculo}");
+            string ruta = EliminarVehiculo + IdVehiculo.ToString();
+            var response = await _httpClient.DeleteAsync(ruta);
 
             if (response.IsSuccessStatusCode)
             {
-                Respuesta = true;
-
+                respuesta = true;
             }
-            return Respuesta;
+            return respuesta;
         }
-
-
-
-
     }
 }
