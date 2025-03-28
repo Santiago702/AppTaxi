@@ -30,11 +30,8 @@ namespace AppTaxi.Controllers
         [HttpPost]
         public async Task<IActionResult> Consultar(Consulta consulta)
         {
-            if (!ModelState.IsValid)
-            {
-                TempData["Mensaje"] = "Error con el modelo";
-                return RedirectToAction("Inicio");
-            }
+            
+           
             ViewBag.Mensaje = "";
             Invitado inv = new Invitado();
             if (string.IsNullOrEmpty(consulta.Placa) && consulta.Documento == 0)
@@ -71,11 +68,7 @@ namespace AppTaxi.Controllers
 
         public async Task<IActionResult> Autenticar(Login login)
         {
-            if (!ModelState.IsValid)
-            {
-                TempData["Mensaje"] = "Error con el modelo";
-                return RedirectToAction("Inicio");
-            }
+            
 
             // Validación de campos obligatorios
             if (string.IsNullOrEmpty(login.Correo) || string.IsNullOrEmpty(login.Contrasena))

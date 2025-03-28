@@ -124,7 +124,7 @@ namespace AppTaxi.Controllers
 
                 if (!esDocumento)
                 {
-                    TempData[Mensaje] = $"El documento ingresado no es una Cédula o no es legible {textoExtraido}";
+                    TempData[Mensaje] = $"El documento ingresado no es una Cédula o no es legible";
                     return false;
                 }
 
@@ -1182,13 +1182,13 @@ namespace AppTaxi.Controllers
             if (!validacion.Respuesta)
             {
                 TempData[Mensaje] = validacion.Mensaje;
-                return RedirectToAction("Agregar_Conductor");
+                return View("Agregar_Conductor");
             }
 
             if (!await _conductor.Guardar(modelo.Conductor, login))
             {
                 TempData[Mensaje] = "No se pudo Guardar";
-                return RedirectToAction("Agregar_Conductor");
+                return View("Agregar_Conductor");
             }
 
             var usuarioConductor = new Usuario

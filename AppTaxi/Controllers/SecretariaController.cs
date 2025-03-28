@@ -631,6 +631,10 @@ namespace AppTaxi.Controllers
             }
 
             var login = CreateLogin(usuario);
+            if(campos != null)
+            {
+
+            }
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             var stream = new MemoryStream();
 
@@ -898,8 +902,12 @@ namespace AppTaxi.Controllers
             val = ValidarModelos.validarUsuario(modelo.Usuario);
             if (val.Respuesta)
             {
-                string contrasena = Encriptado.GetSHA256(modelo.Usuario.Contrasena);
-                modelo.Usuario.Contrasena = contrasena;
+                if(modelo.Usuario.Contrasena != null)
+                {
+                    string contrasena = Encriptado.GetSHA256(modelo.Usuario.Contrasena);
+                    modelo.Usuario.Contrasena = contrasena;
+                }
+                
 
                 bool respuesta = await _usuario.Editar(modelo.Usuario, login);
 
